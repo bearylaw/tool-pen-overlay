@@ -18,6 +18,7 @@ import {
   SHORTCUT_ACTIONS,
   STARTUP_MODES,
   THEMES,
+  TOOLBAR_STYLES,
   TOOLS,
 } from './settings';
 
@@ -52,10 +53,12 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('deletePalette'), id }),
   z.object({ type: z.literal('selectPalette'), id }),
   z.object({ type: z.literal('setOrientation'), orientation: z.enum(ORIENTATIONS) }),
+  z.object({ type: z.literal('setToolbarStyle'), style: z.enum(TOOLBAR_STYLES) }),
   z.object({ type: z.literal('setScale'), scale: z.number().finite() }),
   z.object({ type: z.literal('setTheme'), theme: z.enum(THEMES) }),
   z.object({ type: z.literal('setLanguage'), language: z.enum(LANGUAGES) }),
   z.object({ type: z.literal('setPressure'), enabled: z.boolean() }),
+  z.object({ type: z.literal('setLowLatency'), enabled: z.boolean() }),
   z.object({ type: z.literal('setHighlighterOpacity'), opacity: z.number().finite() }),
   z.object({ type: z.literal('setBehavior'), flag: z.enum(BEHAVIOR_FLAGS), enabled: z.boolean() }),
   z.object({ type: z.literal('setStartup'), mode: z.enum(STARTUP_MODES) }),
@@ -135,6 +138,8 @@ function reducePreferences(settings: Settings, command: Command): Settings {
   switch (command.type) {
     case 'setOrientation':
       return { ...settings, toolbar: { ...settings.toolbar, orientation: command.orientation } };
+    case 'setToolbarStyle':
+      return { ...settings, toolbar: { ...settings.toolbar, style: command.style } };
     case 'setScale':
       return { ...settings, toolbar: { ...settings.toolbar, scale: clampScale(command.scale) } };
     case 'setTheme':
@@ -143,6 +148,8 @@ function reducePreferences(settings: Settings, command: Command): Settings {
       return { ...settings, language: command.language };
     case 'setPressure':
       return { ...settings, drawing: { ...settings.drawing, pressure: command.enabled } };
+    case 'setLowLatency':
+      return { ...settings, drawing: { ...settings.drawing, lowLatency: command.enabled } };
     case 'setHighlighterOpacity':
       return {
         ...settings,

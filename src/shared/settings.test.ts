@@ -39,6 +39,7 @@ describe('migrateSettings', () => {
     });
     expect(settings.toolbar).toEqual({
       orientation: 'vertical',
+      style: 'full',
       scale: 1,
       theme: 'dark',
       position: { x: 10, y: 20 },

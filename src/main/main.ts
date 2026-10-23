@@ -31,6 +31,16 @@ registerScheme();
 
 const distRoot = join(__dirname, '..');
 const log = createLogger(join(app.getPath('userData'), 'logs'), !app.isPackaged);
+const store = createSettingsStore(app.getPath('userData'), log);
+const initialSettings = store.load();
+
+if (initialSettings.drawing.lowLatency) {
+  // Present each frame as soon as it is drawn instead of waiting for the next
+  // vertical blank, and do not cap the frame rate: ink reaches the screen up
+  // to a frame sooner. Idle windows still produce no frames.
+  app.commandLine.appendSwitch('disable-gpu-vsync');
+  app.commandLine.appendSwitch('disable-frame-rate-limit');
+}
 
 process.on('uncaughtException', (error) => log.error('process.uncaught', error));
 process.on('unhandledRejection', (reason) => log.error('process.unhandled-rejection', reason));
@@ -42,7 +52,8 @@ void app.whenReady().then(() => {
   serveRenderer(join(distRoot, 'renderer'), log);
 
   const controller = createController({
-    store: createSettingsStore(app.getPath('userData'), log),
+    store,
+    settings: initialSettings,
     log,
     preload: join(distRoot, 'preload', 'preload.cjs'),
     trayIcon: join(

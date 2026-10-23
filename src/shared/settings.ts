@@ -13,6 +13,12 @@ export type Shape = (typeof SHAPES)[number];
 export const ORIENTATIONS = ['horizontal', 'vertical'] as const;
 export type Orientation = (typeof ORIENTATIONS)[number];
 
+export const TOOLBAR_STYLES = ['full', 'compact'] as const;
+export type ToolbarStyle = (typeof TOOLBAR_STYLES)[number];
+
+/** Palette colours the compact toolbar shows. */
+export const COMPACT_COLORS = 2;
+
 export const THEMES = ['system', 'dark', 'light'] as const;
 export type Theme = (typeof THEMES)[number];
 
@@ -79,6 +85,7 @@ export interface Settings {
   readonly activePaletteId: string;
   readonly toolbar: {
     readonly orientation: Orientation;
+    readonly style: ToolbarStyle;
     readonly scale: number;
     readonly theme: Theme;
     readonly position: Position | null;
@@ -86,6 +93,8 @@ export interface Settings {
   readonly drawing: {
     readonly pressure: boolean;
     readonly highlighterOpacity: number;
+    /** Unthrottled, unsynchronised frames for the lowest ink latency; applied at launch. */
+    readonly lowLatency: boolean;
   };
   readonly behavior: Readonly<Record<BehaviorFlag, boolean>>;
   readonly shortcuts: Readonly<Record<ShortcutAction, string>>;
@@ -139,8 +148,14 @@ export const DEFAULT_SETTINGS: Settings = {
   startup: 'last',
   palettes: DEFAULT_PALETTES,
   activePaletteId: 'p1',
-  toolbar: { orientation: 'horizontal', scale: 1, theme: 'system', position: null },
-  drawing: { pressure: true, highlighterOpacity: 0.35 },
+  toolbar: {
+    orientation: 'horizontal',
+    style: 'full',
+    scale: 1,
+    theme: 'system',
+    position: null,
+  },
+  drawing: { pressure: true, highlighterOpacity: 0.35, lowLatency: true },
   behavior: { clearOnExit: false, drawOnLaunch: false, launchAtLogin: false },
   shortcuts: DEFAULT_SHORTCUTS,
   language: 'system',
@@ -237,6 +252,7 @@ const settingsV1Schema = z.object({
   toolbar: z
     .object({
       orientation: z.enum(ORIENTATIONS).catch(DEFAULT_SETTINGS.toolbar.orientation),
+      style: z.enum(TOOLBAR_STYLES).catch(DEFAULT_SETTINGS.toolbar.style),
       scale: z.number().finite().transform(clampScale).catch(DEFAULT_SETTINGS.toolbar.scale),
       theme: z.enum(THEMES).catch(DEFAULT_SETTINGS.toolbar.theme),
       position: positionSchema,
@@ -245,6 +261,7 @@ const settingsV1Schema = z.object({
   drawing: z
     .object({
       pressure: flag(DEFAULT_SETTINGS.drawing.pressure),
+      lowLatency: flag(DEFAULT_SETTINGS.drawing.lowLatency),
       highlighterOpacity: z
         .number()
         .finite()

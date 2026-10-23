@@ -2,7 +2,7 @@ import '../ui/theme.css';
 import './toolbar.css';
 import type { CommandInput } from '../../shared/commands';
 import type { AppState, PanelKind } from '../../shared/ipc';
-import { activePalette, type Shape, type Tool } from '../../shared/settings';
+import { activePalette, COMPACT_COLORS, type Shape, type Tool } from '../../shared/settings';
 import { api, bindAppKeys, reportSizeOf, translator } from '../ui/api';
 import { h, replaceChildrenIfChanged, setAttr, viewportRect } from '../ui/dom';
 import { type IconName, icon } from '../ui/icons';
@@ -77,6 +77,9 @@ const settings = button('settings', (el) => openPanel('settings', el));
 
 const sep = (): HTMLElement => h('div', { className: 'sep', attrs: { role: 'separator' } });
 
+// Hidden in compact mode, together with the shape tool and the colour picker.
+const sizeSeparator = sep();
+
 const bar = h('div', { className: 'bar card', attrs: { role: 'toolbar' } }, [
   grip,
   h('div', { className: 'group', attrs: { role: 'group' } }, [
@@ -88,7 +91,7 @@ const bar = h('div', { className: 'bar card', attrs: { role: 'toolbar' } }, [
   ]),
   sep(),
   h('div', { className: 'group colors', attrs: { role: 'group' } }, [swatches, customColor]),
-  sep(),
+  sizeSeparator,
   size,
   sep(),
   h('div', { className: 'group', attrs: { role: 'group' } }, [undo, redo, clear, ink]),
@@ -109,17 +112,25 @@ function label(el: HTMLElement, text: string, keys?: string): void {
 function renderSwatches(current: AppState): void {
   const t = translator(current);
   const palette = activePalette(current.settings);
-  replaceChildrenIfChanged(swatches, palette.colors.join(','), () =>
-    palette.colors.map((color, index) => {
+  const compact = current.settings.toolbar.style === 'compact';
+  const colors = compact ? palette.colors.slice(0, COMPACT_COLORS) : palette.colors;
+  replaceChildrenIfChanged(swatches, `${current.runtime.locale}:${colors.join(',')}`, () =>
+    colors.map((color, index) => {
       const swatch = h('button', {
         className: 'swatch',
         attrs: { type: 'button', 'data-color': color },
         on: { click: () => send({ type: 'selectPaletteColor', index }) },
       });
+      // Right-click reaches the colour picker, the only way to it in compact mode.
+      swatch.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        openPanel('color', swatch);
+      });
       swatch.style.setProperty('--swatch', color);
+      const name = t('color.swatch', { hex: color.toUpperCase() });
       label(
         swatch,
-        t('color.swatch', { hex: color.toUpperCase() }),
+        t('color.swatchMore', { color: name }),
         index < 9 ? String(index + 1) : undefined,
       );
       return swatch;
@@ -153,6 +164,9 @@ function render(current: AppState): void {
   bar.classList.toggle('vertical', vertical);
   setAttr(bar, 'aria-orientation', s.toolbar.orientation);
   label(bar, t('toolbar.label'));
+  const compact = s.toolbar.style === 'compact';
+  bar.classList.toggle('compact', compact);
+  for (const el of [toolButtons.shape, customColor, sizeSeparator, size]) el.hidden = compact;
   setAttr(grip, 'title', t('toolbar.drag'));
 
   const drawing = runtime.drawMode;

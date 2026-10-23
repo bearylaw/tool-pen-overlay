@@ -260,10 +260,43 @@ try {
   await panel.screenshot({ path: join(out, 'panel-size-dark.png'), omitBackground: true });
   step('dark theme applies to toolbar and panels; hidden rows stay hidden');
 
+  await panel.keyboard.press('Escape');
+  await sleep(300);
+  await button('Settings').click();
+  await panel.waitForSelector('.settings-panel');
+  await panel.getByRole('radio', { name: 'Compact' }).click();
+  await panel.keyboard.press('Escape');
+  await sleep(400);
+  assert.equal(await toolbar.locator('.swatch:visible').count(), 2);
+  assert.equal(await toolbar.getByRole('button', { name: /^Shapes/ }).isVisible(), false);
+  assert.equal(await toolbar.locator('.color-more').isVisible(), false);
+  assert.equal(await toolbar.locator('.size').isVisible(), false);
+  for (const name of [
+    'Mouse: stop drawing',
+    'Pen',
+    'Highlighter',
+    'Eraser',
+    'Undo',
+    'Redo',
+    'Clear all drawings',
+    'Hide drawings',
+    'Settings',
+  ]) {
+    assert.equal(await button(name).isVisible(), true, name);
+  }
+  await toolbar.locator('.swatch').first().click({ button: 'right' });
+  await panel.waitForSelector('.color-panel');
+  await panel.keyboard.press('Escape');
+  await sleep(300);
+  await toolbar.evaluate(() => document.activeElement?.blur());
+  await toolbar.screenshot({ path: join(out, 'toolbar-compact-dark.png'), omitBackground: true });
+  step('compact mode shows only the essentials; right-click opens the colours');
+
   await app.evaluate(({ app: electronApp }) => electronApp.quit());
   await sleep(500);
   const saved = JSON.parse(readFileSync(join(userData, 'settings.json'), 'utf8'));
   assert.equal(saved.toolbar.theme, 'dark');
+  assert.equal(saved.toolbar.style, 'compact');
   assert.equal(saved.tool.sizes.shape, 16);
   assert.ok(saved.palettes[0].colors.includes('#14b8a6'));
   step('settings persist to the user folder');

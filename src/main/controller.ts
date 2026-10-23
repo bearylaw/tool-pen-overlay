@@ -30,6 +30,8 @@ import type { Page } from './web';
 
 export interface ControllerOptions {
   readonly store: SettingsStore;
+  /** Settings as loaded at launch. */
+  readonly settings: Settings;
   readonly log: Logger;
   readonly preload: string;
   readonly trayIcon: string;
@@ -61,7 +63,7 @@ const COLOR_COMMANDS = new Set<Command['type']>([
 /** Builds every window and starts the app in the state the settings describe. */
 export function createController(options: ControllerOptions): Controller {
   const { store, log } = options;
-  const loaded = store.load();
+  const loaded = options.settings;
   let settings: Settings =
     loaded.startup === 'defaults' ? { ...loaded, tool: loaded.defaults } : loaded;
   let router: RouterState = EMPTY_ROUTER;

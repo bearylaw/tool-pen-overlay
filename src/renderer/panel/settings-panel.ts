@@ -12,6 +12,7 @@ import {
   type ShortcutAction,
   STARTUP_MODES,
   THEMES,
+  TOOLBAR_STYLES,
 } from '../../shared/settings';
 import { api, type Translate, translator } from '../ui/api';
 import { h, setAttr } from '../ui/dom';
@@ -49,6 +50,7 @@ export function settingsPanel(): View<AppState> {
   };
   const labels = {
     orientation: h('span', { className: 'field-label' }),
+    style: h('span', { className: 'field-label' }),
     scale: h('label', { className: 'field-label', attrs: { for: 'scale' } }),
     theme: h('span', { className: 'field-label' }),
     language: h('label', { className: 'field-label', attrs: { for: 'language' } }),
@@ -81,7 +83,12 @@ export function settingsPanel(): View<AppState> {
     if (value !== undefined) send({ type: 'setLanguage', language: value });
   });
 
+  const style = segmented(TOOLBAR_STYLES, (value) =>
+    send({ type: 'setToolbarStyle', style: value }),
+  );
   const pressure = toggle((enabled) => send({ type: 'setPressure', enabled }));
+  const lowLatency = toggle((enabled) => send({ type: 'setLowLatency', enabled }));
+  const lowLatencyHint = h('p', { className: 'hint muted' });
   const opacityValue = h('output', { className: 'muted' });
   const opacity = h('input', {
     attrs: { id: 'opacity', type: 'range', min: 10, max: 90, step: 5 },
@@ -139,6 +146,7 @@ export function settingsPanel(): View<AppState> {
   const scroller = h('div', { className: 'scroll' }, [
     notice,
     section(headings.toolbar, [
+      field(labels.style, style.el),
       field(labels.orientation, orientation.el),
       field(h('div', { className: 'row between' }, [labels.scale, scaleValue]), scale),
       field(labels.theme, theme.el),
@@ -146,6 +154,8 @@ export function settingsPanel(): View<AppState> {
     ]),
     section(headings.drawing, [
       pressure.el,
+      lowLatency.el,
+      lowLatencyHint,
       field(h('div', { className: 'row between' }, [labels.opacity, opacityValue]), opacity),
     ]),
     section(
@@ -200,6 +210,12 @@ export function settingsPanel(): View<AppState> {
 
   function updateToolbar({ settings: s }: AppState, t: Translate): void {
     headings.toolbar.textContent = t('section.toolbar');
+    labels.style.textContent = t('style.label');
+    style.update(
+      s.toolbar.style,
+      { full: t('style.full'), compact: t('style.compact') },
+      t('style.label'),
+    );
     labels.orientation.textContent = t('orientation.label');
     orientation.update(
       s.toolbar.orientation,
@@ -228,6 +244,8 @@ export function settingsPanel(): View<AppState> {
   function updateDrawing({ settings: s, runtime }: AppState, t: Translate): void {
     headings.drawing.textContent = t('section.drawing');
     pressure.update(s.drawing.pressure, t('pressure.label'));
+    lowLatency.update(s.drawing.lowLatency, t('lowLatency.label'));
+    lowLatencyHint.textContent = t('lowLatency.hint');
     labels.opacity.textContent = t('size.opacity');
     const pct = Math.round(s.drawing.highlighterOpacity * 100);
     opacityValue.textContent = `${pct} %`;
