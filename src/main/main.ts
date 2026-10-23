@@ -15,6 +15,13 @@ if (process.argv.includes('--version')) {
   app.exit(0);
 }
 
+// Development and the tests can point settings at a throwaway folder. Set
+// before the single-instance lock, which is keyed by this folder, so a test
+// instance runs beside an installed one.
+const userDataOverride = app.isPackaged ? undefined : process.env.PEN_OVERLAY_USER_DATA;
+if (userDataOverride !== undefined && userDataOverride !== '')
+  app.setPath('userData', userDataOverride);
+
 if (!app.requestSingleInstanceLock()) app.exit(0);
 
 if (process.platform === 'linux') {
@@ -22,25 +29,12 @@ if (process.platform === 'linux') {
   app.commandLine.appendSwitch('enable-transparent-visuals');
 }
 
-// Development and the smoke test can point settings at a throwaway folder.
-const userDataOverride = app.isPackaged ? undefined : process.env.PEN_OVERLAY_USER_DATA;
-if (userDataOverride !== undefined && userDataOverride !== '')
-  app.setPath('userData', userDataOverride);
-
 registerScheme();
 
 const distRoot = join(__dirname, '..');
 const log = createLogger(join(app.getPath('userData'), 'logs'), !app.isPackaged);
 const store = createSettingsStore(app.getPath('userData'), log);
 const initialSettings = store.load();
-
-if (initialSettings.drawing.lowLatency) {
-  // Present each frame as soon as it is drawn instead of waiting for the next
-  // vertical blank, and do not cap the frame rate: ink reaches the screen up
-  // to a frame sooner. Idle windows still produce no frames.
-  app.commandLine.appendSwitch('disable-gpu-vsync');
-  app.commandLine.appendSwitch('disable-frame-rate-limit');
-}
 
 process.on('uncaughtException', (error) => log.error('process.uncaught', error));
 process.on('unhandledRejection', (reason) => log.error('process.unhandled-rejection', reason));
