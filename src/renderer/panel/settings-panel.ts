@@ -5,6 +5,8 @@ import {
   BEHAVIOR_FLAGS,
   type BehaviorFlag,
   CURSOR_SIZES,
+  CURSOR_STYLES,
+  type CursorStyle,
   LANGUAGES,
   ORIENTATIONS,
   SCALE_MAX,
@@ -16,6 +18,7 @@ import {
   TOOLBAR_STYLES,
 } from '../../shared/settings';
 import { api, type Translate, translator } from '../ui/api';
+import { cursorDataUrl, cursorImage } from '../ui/cursor';
 import { h, setAttr } from '../ui/dom';
 import {
   card,
@@ -53,6 +56,7 @@ export function settingsPanel(): View<AppState> {
     orientation: h('span', { className: 'field-label' }),
     style: h('span', { className: 'field-label' }),
     cursor: h('span', { className: 'field-label' }),
+    cursorStyle: h('span', { className: 'field-label' }),
     scale: h('label', { className: 'field-label', attrs: { for: 'scale' } }),
     theme: h('span', { className: 'field-label' }),
     language: h('label', { className: 'field-label', attrs: { for: 'language' } }),
@@ -88,6 +92,7 @@ export function settingsPanel(): View<AppState> {
   const style = segmented(TOOLBAR_STYLES, (value) =>
     send({ type: 'setToolbarStyle', style: value }),
   );
+  const cursorStyle = cursorPicker();
   const cursorSize = segmented(CURSOR_SIZES, (value) =>
     send({ type: 'setCursorSize', cursorSize: value }),
   );
@@ -156,6 +161,7 @@ export function settingsPanel(): View<AppState> {
       field(labels.language, language),
     ]),
     section(headings.drawing, [
+      field(labels.cursorStyle, cursorStyle.el),
       field(labels.cursor, cursorSize.el),
       pressure.el,
       field(h('div', { className: 'row between' }, [labels.opacity, opacityValue]), opacity),
@@ -245,6 +251,8 @@ export function settingsPanel(): View<AppState> {
 
   function updateDrawing({ settings: s, runtime }: AppState, t: Translate): void {
     headings.drawing.textContent = t('section.drawing');
+    labels.cursorStyle.textContent = t('cursorStyle.label');
+    cursorStyle.update(state ?? null, t);
     labels.cursor.textContent = t('cursor.label');
     cursorSize.update(
       s.drawing.cursorSize,
@@ -374,6 +382,76 @@ function recorder(action: ShortcutAction): {
       translate = t;
       label.textContent = t(`shortcut.${action}`);
       paint();
+    },
+  };
+}
+
+/**
+ * The cursor styles as a radio group, each showing the real cursor for the
+ * current tool, size and colour, so choosing is seeing.
+ */
+function cursorPicker(): {
+  el: HTMLElement;
+  update: (state: AppState | null, t: Translate) => void;
+} {
+  const options = CURSOR_STYLES.map((style) => {
+    const preview = h('img', { className: 'cursor-preview', attrs: { alt: '', draggable: false } });
+    const label = h('span');
+    const el = h(
+      'button',
+      { className: 'cursor-option', attrs: { type: 'button', role: 'radio' } },
+      [h('span', { className: 'cursor-stage' }, [preview]), label],
+    );
+    el.addEventListener('click', () => send({ type: 'setCursorStyle', cursorStyle: style }));
+    return { style, el, preview, label };
+  });
+  const el = h(
+    'div',
+    { className: 'cursor-grid', attrs: { role: 'radiogroup' } },
+    options.map((o) => o.el),
+  );
+  el.addEventListener('keydown', (event) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    if (step === undefined) return;
+    event.preventDefault();
+    const index = options.findIndex((o) => o.el === document.activeElement);
+    const next = options[(index + step + options.length) % options.length];
+    if (next !== undefined) {
+      send({ type: 'setCursorStyle', cursorStyle: next.style });
+      next.el.focus();
+    }
+  });
+  let key = '';
+  return {
+    el,
+    update: (state, t) => {
+      if (state === null) return;
+      const { tool, shape, sizes, color } = state.settings.tool;
+      const { cursorStyle, cursorSize, highlighterOpacity } = state.settings.drawing;
+      setAttr(el, 'aria-label', t('cursorStyle.label'));
+      for (const o of options) {
+        const checked = o.style === cursorStyle;
+        setAttr(o.el, 'aria-checked', String(checked));
+        o.el.tabIndex = checked ? 0 : -1;
+        o.label.textContent = t(`cursorStyle.${o.style as CursorStyle}`);
+      }
+      const nextKey = [tool, shape, sizes[tool], color, cursorSize, highlighterOpacity].join(':');
+      if (nextKey === key) return;
+      key = nextKey;
+      for (const o of options) {
+        const image = cursorImage({
+          style: o.style,
+          tool,
+          shape,
+          size: sizes[tool],
+          color,
+          opacity: tool === 'highlighter' ? highlighterOpacity : 1,
+          cursorSize,
+        });
+        o.preview.src = cursorDataUrl(image.svg);
+        o.preview.width = image.width;
+        o.preview.height = image.height;
+      }
     },
   };
 }

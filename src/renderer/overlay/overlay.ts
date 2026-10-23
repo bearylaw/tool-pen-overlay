@@ -23,7 +23,7 @@ import {
 import type { AppState, InkOrder } from '../../shared/ipc';
 import type { Shape } from '../../shared/settings';
 import { api } from '../ui/api';
-import { brushCursor } from './cursor';
+import { brushCursor } from '../ui/cursor';
 import { dot, drawSegment, drawShape, drawStroke, prepare } from './paint';
 
 /** How far ahead of the newest sample the tip is drawn: about one frame. */
@@ -392,12 +392,23 @@ function applyState(next: AppState): void {
   if (!drawMode) finish(null);
   document.body.classList.toggle('hidden', !inkVisible);
   const { tool, shape, sizes, color } = next.settings.tool;
-  const { cursorSize } = next.settings.drawing;
-  const key = drawMode ? `${tool}:${shape}:${sizes[tool]}:${color}:${cursorSize}` : 'off';
+  const { cursorSize, cursorStyle, highlighterOpacity } = next.settings.drawing;
+  const opacity = tool === 'highlighter' ? highlighterOpacity : 1;
+  const key = drawMode
+    ? `${cursorStyle}:${tool}:${shape}:${sizes[tool]}:${color}:${opacity}:${cursorSize}`
+    : 'off';
   if (key !== cursorKey) {
     cursorKey = key;
     document.body.style.cursor = drawMode
-      ? brushCursor({ tool, shape, size: sizes[tool], color, cursorSize })
+      ? brushCursor({
+          style: cursorStyle,
+          tool,
+          shape,
+          size: sizes[tool],
+          color,
+          opacity,
+          cursorSize,
+        })
       : 'default';
   }
 }

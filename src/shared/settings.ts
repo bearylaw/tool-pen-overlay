@@ -19,6 +19,9 @@ export type ToolbarStyle = (typeof TOOLBAR_STYLES)[number];
 /** Palette colours the compact toolbar shows. */
 export const COMPACT_COLORS = 2;
 
+export const CURSOR_STYLES = ['target', 'crosshair', 'tool', 'dot', 'spotlight'] as const;
+export type CursorStyle = (typeof CURSOR_STYLES)[number];
+
 export const CURSOR_SIZES = ['standard', 'large'] as const;
 export type CursorSize = (typeof CURSOR_SIZES)[number];
 
@@ -96,6 +99,7 @@ export interface Settings {
   readonly drawing: {
     readonly pressure: boolean;
     readonly highlighterOpacity: number;
+    readonly cursorStyle: CursorStyle;
     readonly cursorSize: CursorSize;
   };
   readonly behavior: Readonly<Record<BehaviorFlag, boolean>>;
@@ -157,7 +161,12 @@ export const DEFAULT_SETTINGS: Settings = {
     theme: 'system',
     position: null,
   },
-  drawing: { pressure: true, highlighterOpacity: 0.35, cursorSize: 'standard' },
+  drawing: {
+    pressure: true,
+    highlighterOpacity: 0.35,
+    cursorStyle: 'target',
+    cursorSize: 'standard',
+  },
   behavior: { clearOnExit: false, drawOnLaunch: false, launchAtLogin: false },
   shortcuts: DEFAULT_SHORTCUTS,
   language: 'system',
@@ -263,6 +272,7 @@ const settingsV1Schema = z.object({
   drawing: z
     .object({
       pressure: flag(DEFAULT_SETTINGS.drawing.pressure),
+      cursorStyle: z.enum(CURSOR_STYLES).catch(DEFAULT_SETTINGS.drawing.cursorStyle),
       cursorSize: z.enum(CURSOR_SIZES).catch(DEFAULT_SETTINGS.drawing.cursorSize),
       highlighterOpacity: z
         .number()
