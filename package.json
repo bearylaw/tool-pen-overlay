@@ -1,0 +1,44 @@
+{
+  "name": "pen-overlay",
+  "productName": "Pen Overlay",
+  "version": "1.0.0",
+  "description": "Draw anywhere on your screen: a fast, minimal pen overlay with a draggable toolbar.",
+  "license": "MIT",
+  "author": "bearylaw",
+  "homepage": "https://github.com/bearylaw/tool-pen-overlay",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bearylaw/tool-pen-overlay.git"
+  },
+  "private": true,
+  "type": "module",
+  "main": "dist/main/main.cjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "electron:fetch": "node node_modules/electron/install.js",
+    "dev": "node scripts/build.mjs && electron .",
+    "format": "biome format --write .",
+    "lint": "biome lint . && depcruise src --config .dependency-cruiser.cjs",
+    "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json",
+    "test": "vitest run",
+    "check": "npm run typecheck && biome ci . && depcruise src --config .dependency-cruiser.cjs && vitest run",
+    "build": "node scripts/build.mjs --production",
+    "dist": "npm run build && electron-builder --publish never",
+    "test:e2e": "npm run build && node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "dependency-cruiser": "18.6.0",
+    "electron": "44.7.2",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2",
+    "playwright-core": "1.64.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

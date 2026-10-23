@@ -1,0 +1,16 @@
+# Everything that runs on Linux keeps LF, whatever Windows does locally.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff2 binary
+*.pdf binary
+*.ogg binary
+*.wav binary
+*.jar binary

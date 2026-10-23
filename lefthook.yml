@@ -1,0 +1,17 @@
+# Git hooks. `npx lefthook install` once after cloning (lefthook and gitleaks
+# must be on PATH). CI runs the same `check` and is the gate.
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.{ts,mjs,cjs,js,json,css}"
+      run: npx biome format --no-errors-on-unmatched {staged_files}
+    lint:
+      glob: "*.{ts,mjs,cjs,js,json,css}"
+      run: npx biome lint --no-errors-on-unmatched {staged_files}
+    secrets:
+      run: gitleaks git --staged --redact --no-banner
+pre-push:
+  commands:
+    check:
+      run: npm run check
