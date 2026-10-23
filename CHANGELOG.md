@@ -6,6 +6,20 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-10-23
+
+### Added
+
+- Five drawing cursor styles to choose from in Settings → Drawing, each
+  with a live preview: crosshair and tool, crosshair, tool icon, brush
+  preview and spotlight. Standard and Large sizes apply to all of them.
+
+### Changed
+
+- The drawing cursor is easy to see on any background: every style is
+  outlined dark under a light line, and a thin pen no longer gives a
+  near-invisible cursor.
+
 ## [1.0.2] - 2026-10-23
 
 ### Added
@@ -69,7 +83,8 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Installers for Windows (NSIS, portable), macOS (universal DMG and ZIP) and
   Linux (AppImage, deb) built in CI.
 
-[Unreleased]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/bearylaw/tool-pen-overlay/releases/tag/v1.0.0

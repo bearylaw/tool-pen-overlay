@@ -1,7 +1,7 @@
 {
   "name": "pen-overlay",
   "productName": "Pen Overlay",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Draw anywhere on your screen: a fast, minimal pen overlay with a draggable toolbar.",
   "license": "MIT",
   "author": {

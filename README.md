@@ -39,6 +39,9 @@ touches the network.
   remove, drag to reorder, rename. The active palette sits on the toolbar;
   <kbd>1</kbd>–<kbd>9</kbd> pick from it.
 - **Brush sizes** from 1 to 96 px, remembered separately for each tool.
+- **A cursor you can see**: five styles (crosshair and tool, crosshair,
+  tool icon, brush preview, presenter spotlight) in two sizes, all outlined
+  to stay visible on any background.
 - **Undo and redo** across all monitors, **clear**, and **hide drawings**
   without losing them.
 - **Draggable toolbar**, horizontal or vertical, full or **compact**,
@@ -168,7 +171,7 @@ Open the colour panel with the rainbow ring.
 | Section | What you can change |
 |---|---|
 | Toolbar | Full or compact style, horizontal or vertical layout, size (75–200 %), theme, language |
-| Drawing | Pen pressure on or off, highlighter opacity |
+| Drawing | Cursor style (with previews) and size, pen pressure on or off, highlighter opacity |
 | Behaviour | Clear drawings when you stop drawing, start in drawing mode, launch at login (Windows, macOS) |
 | Defaults | Start with the last used tool or with your saved defaults; save the current tool, colour and size as your default |
 | Global shortcuts | See above |
