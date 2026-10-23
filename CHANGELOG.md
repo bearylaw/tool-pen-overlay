@@ -6,6 +6,21 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-23
+
+### Fixed
+
+- Drawing no longer lags more and more the longer you hold the pen down.
+  Ink was painted once per input event (hundreds per second with a pen),
+  which made the GPU fall behind; it is now painted once per display frame.
+  On a 144 Hz display a 12,000-sample stroke keeps every frame at the
+  refresh rate (worst frame 21 ms, before up to 458 ms).
+
+### Removed
+
+- The *Lowest latency* setting. Turning off vsync and the frame cap made
+  the lag worse, not better.
+
 ## [1.0.0] - 2026-10-23
 
 ### Added
@@ -39,5 +54,6 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Installers for Windows (NSIS, portable), macOS (universal DMG and ZIP) and
   Linux (AppImage, deb) built in CI.
 
-[Unreleased]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/bearylaw/tool-pen-overlay/releases/tag/v1.0.0

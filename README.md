@@ -27,11 +27,12 @@ touches the network.
 - **Draw over everything**: one transparent layer per monitor, above other
   windows and the taskbar (exclusive full-screen games excepted). Monitors
   with different scaling are handled.
-- **Low latency**: every raw pointer update is drawn the moment it arrives on
-  low-latency canvases that present without waiting for the display; the
-  line is extended a few milliseconds ahead along your movement so it stays
-  under the pointer even when you draw fast; finished strokes are added
-  without repainting the rest.
+- **Low latency, also on long strokes**: every pen sample is recorded the
+  moment it arrives and painted with the next display frame, so the screen
+  never falls behind however fast the pen reports; the line is extended a
+  few milliseconds ahead along your movement so it stays under the pointer
+  when you draw fast; finished strokes are added without repainting the
+  rest.
 - **Tools**: pen (with tablet pressure), highlighter, line, arrow,
   rectangle, ellipse, and an eraser that removes whole strokes. Hold
   <kbd>Shift</kbd> for straight angles, squares and circles. The eraser end
@@ -167,7 +168,7 @@ Open the colour panel with the rainbow ring.
 | Section | What you can change |
 |---|---|
 | Toolbar | Full or compact style, horizontal or vertical layout, size (75–200 %), theme, language |
-| Drawing | Pen pressure on or off, lowest latency (on by default; takes effect after a restart), highlighter opacity |
+| Drawing | Pen pressure on or off, highlighter opacity |
 | Behaviour | Clear drawings when you stop drawing, start in drawing mode, launch at login (Windows, macOS) |
 | Defaults | Start with the last used tool or with your saved defaults; save the current tool, colour and size as your default |
 | Global shortcuts | See above |
@@ -249,8 +250,9 @@ npm run check
 
 Runs the type checker, Biome (format and lint), the architecture rules and
 the unit tests; CI runs the same command. `npm run test:e2e` drives the
-built app end to end (needs a desktop session), and `npm run dist` builds
-installers for the current system. Build and test detail for contributors
+built app end to end and `node scripts/bench.mjs` measures input delay and
+frame times on a long stroke (both need a desktop session); `npm run dist`
+builds installers for the current system. Build and test detail for contributors
 and agents is in [AGENTS.md](AGENTS.md); design decisions are in
 [docs/decisions/](docs/decisions/).
 

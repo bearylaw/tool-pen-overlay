@@ -1,6 +1,6 @@
 # Draw on raw pointer updates with a predicted tip and no vsync
 
-- Status: accepted
+- Status: superseded by [0005](0005-paint-once-per-frame.md)
 - Date: 2026-10-23
 
 ## Context
