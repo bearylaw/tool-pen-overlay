@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Pen Overlay</title>
+  <path d="M4 22c3-5 6-6.6 8-4s4 3.2 6.7-1.2C20.3 14.3 22 13 23.5 13" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="26.5" cy="12.5" r="2.6" fill="#000"/>
+</svg>

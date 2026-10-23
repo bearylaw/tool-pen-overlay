@@ -1,0 +1,72 @@
+# Installers for Windows, macOS and Linux. Built in CI on a version tag
+# (.github/workflows/release.yml); `npm run dist` builds for the current OS.
+appId: io.github.bearylaw.penoverlay
+productName: Pen Overlay
+copyright: Copyright © 2026 bearylaw
+artifactName: "pen-overlay-${version}-${os}-${arch}.${ext}"
+
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - dist/**/*
+  - "!dist/**/*.map"
+  - package.json
+
+asar: true
+
+# Electron fuses: no running as plain Node, no Node options or inspector
+# flags from outside, and the app only loads from its integrity-checked asar.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+
+win:
+  icon: resources/icon.png
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+    - target: portable
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Pen Overlay
+
+portable:
+  artifactName: "pen-overlay-${version}-windows-portable.${ext}"
+
+mac:
+  icon: resources/icon.png
+  category: public.app-category.productivity
+  # No Apple Developer ID yet: ad-hoc signed, so first launch needs
+  # right-click → Open (see README).
+  identity: "-"
+  extendInfo:
+    LSUIElement: true
+  target:
+    - target: dmg
+      arch: [universal]
+    - target: zip
+      arch: [universal]
+
+linux:
+  icon: resources/icon.png
+  category: Graphics
+  synopsis: Draw anywhere on your screen
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+
+publish: null

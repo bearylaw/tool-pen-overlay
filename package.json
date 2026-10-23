@@ -4,7 +4,11 @@
   "version": "1.0.0",
   "description": "Draw anywhere on your screen: a fast, minimal pen overlay with a draggable toolbar.",
   "license": "MIT",
-  "author": "bearylaw",
+  "author": {
+    "name": "bearylaw",
+    "email": "bearylaw@users.noreply.github.com",
+    "url": "https://github.com/bearylaw"
+  },
   "homepage": "https://github.com/bearylaw/tool-pen-overlay",
   "repository": {
     "type": "git",
@@ -35,10 +39,22 @@
     "electron-builder": "26.15.3",
     "esbuild": "0.28.2",
     "playwright-core": "1.64.1",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "vitest": "5.0.5"
   },
   "dependencies": {
     "zod": "4.6.7"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/bearylaw/tool-pen-overlay/issues"
+  },
+  "keywords": [
+    "overlay",
+    "annotate",
+    "draw",
+    "pen",
+    "screen",
+    "presentation",
+    "electron"
+  ]
 }

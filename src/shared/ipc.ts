@@ -2,16 +2,6 @@ import { z } from 'zod';
 import type { CommandInput } from './commands';
 import type { Settings, ShortcutAction } from './settings';
 
-/** IPC channel names. One place, so preload and main cannot drift apart. */
-export const CHANNELS = {
-  command: 'pen:command',
-  intent: 'pen:intent',
-  state: 'pen:state',
-  size: 'pen:size',
-  inkReport: 'pen:ink-report',
-  inkOrder: 'pen:ink-order',
-} as const;
-
 export const PANELS = ['color', 'size', 'shape', 'settings'] as const;
 export type PanelKind = (typeof PANELS)[number];
 
@@ -90,6 +80,8 @@ export interface Runtime {
   readonly drawMode: boolean;
   readonly inkVisible: boolean;
   readonly canUndo: boolean;
+  /** Whether any overlay has strokes, so Clear has something to do. */
+  readonly hasInk: boolean;
   readonly canRedo: boolean;
   readonly panel: PanelKind | null;
   readonly platform: Platform;
@@ -98,8 +90,7 @@ export interface Runtime {
   readonly shortcutConflicts: readonly ShortcutAction[];
   readonly version: string;
   readonly notice: Notice | null;
-  /** System dark mode, for the `system` theme. */
-  readonly systemDark: boolean;
+  readonly toolbarVisible: boolean;
 }
 
 /** Everything a window renders from. Sent whole on every change; it is small. */

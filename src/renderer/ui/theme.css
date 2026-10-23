@@ -1,0 +1,257 @@
+/* Design tokens and base controls shared by the toolbar and the panels.
+   Light and dark follow prefers-color-scheme, which the main process drives
+   from the theme setting through nativeTheme.themeSource. */
+
+:root {
+  color-scheme: light dark;
+  --font:
+    "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "SF Pro Text", "Inter",
+    "Cantarell", "Noto Sans", sans-serif;
+
+  --surface: rgb(250 250 252 / 0.96);
+  --surface-raised: rgb(255 255 255);
+  --hover: rgb(15 23 42 / 0.06);
+  --pressed: rgb(15 23 42 / 0.1);
+  --active: rgb(15 23 42 / 0.88);
+  --on-active: rgb(255 255 255);
+  --border: rgb(15 23 42 / 0.1);
+  --border-strong: rgb(15 23 42 / 0.2);
+  --text: rgb(24 24 27);
+  --text-muted: rgb(82 82 91);
+  --accent: rgb(37 99 235);
+  --danger: rgb(220 38 38);
+  --focus: rgb(37 99 235);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 20px rgb(0 0 0 / 0.14);
+
+  --radius-lg: 14px;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --button: 36px;
+  --icon: 20px;
+  --gap: 2px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: rgb(30 30 34 / 0.95);
+    --surface-raised: rgb(58 58 66);
+    --hover: rgb(255 255 255 / 0.08);
+    --pressed: rgb(255 255 255 / 0.13);
+    --active: rgb(244 244 245 / 0.94);
+    --on-active: rgb(24 24 27);
+    --border: rgb(255 255 255 / 0.1);
+    --border-strong: rgb(255 255 255 / 0.22);
+    --text: rgb(244 244 245);
+    --text-muted: rgb(161 161 170);
+    --accent: rgb(96 165 250);
+    --danger: rgb(248 113 113);
+    --focus: rgb(147 197 253);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.38);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Component display rules must not resurrect hidden elements. */
+[hidden] {
+  /* biome-ignore lint/complexity/noImportantStyles: hidden must win over every display rule. */
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text);
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.icon {
+  width: var(--icon);
+  height: var(--icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+.icon .filled {
+  fill: currentColor;
+  stroke: none;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.btn {
+  display: inline-grid;
+  place-items: center;
+  width: var(--button);
+  height: var(--button);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease),
+    color 120ms var(--ease),
+    transform 120ms var(--ease);
+}
+
+.btn:hover {
+  background: var(--hover);
+}
+
+.btn:active {
+  background: var(--pressed);
+  transform: scale(0.94);
+}
+
+.btn[aria-pressed="true"] {
+  background: var(--active);
+  color: var(--on-active);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+  transform: none;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.text-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.text-btn .icon {
+  --icon: 16px;
+}
+
+.text-btn.danger {
+  color: var(--danger);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+input[type="text"],
+select {
+  height: 30px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text);
+  font: inherit;
+  user-select: text;
+}
+
+input[type="text"]:focus-visible,
+select:focus-visible {
+  outline-offset: 0;
+}
+
+/* Range input: thin track, round thumb, consistent across platforms. */
+input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must win over every component rule. */
+    transition: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: as above. */
+    animation: none !important;
+  }
+}
+
+/* Windows high contrast and other forced-colour modes. */
+@media (forced-colors: active) {
+  .card {
+    border: 1px solid CanvasText;
+  }
+
+  .btn[aria-pressed="true"] {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}
