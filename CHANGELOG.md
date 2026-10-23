@@ -6,6 +6,21 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-23
+
+### Added
+
+- Tray menu: **Reset toolbar position** moves the toolbar to the middle of
+  the main screen.
+- A toolbar dropped within 16 px of a screen edge snaps flush to it.
+
+### Fixed
+
+- The toolbar no longer jumps up when it sits near the bottom of the screen
+  and you pick the pen or start drawing. It stays exactly where you drop
+  it, also over the taskbar.
+- The toolbar has no shadow or transparent margin around it any more.
+
 ## [1.0.1] - 2026-10-23
 
 ### Fixed
@@ -54,6 +69,7 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Installers for Windows (NSIS, portable), macOS (universal DMG and ZIP) and
   Linux (AppImage, deb) built in CI.
 
-[Unreleased]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/bearylaw/tool-pen-overlay/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/bearylaw/tool-pen-overlay/releases/tag/v1.0.0

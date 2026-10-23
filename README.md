@@ -10,10 +10,7 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/toolbar-dark.png" />
-    <img src="docs/images/toolbar-light.png" alt="The Pen Overlay toolbar: mouse, pen, highlighter, shapes and eraser tools, eight colour swatches, a colour picker, the brush size, undo, redo, clear, show or hide drawings, and settings." />
-  </picture>
+  <img src="docs/images/toolbar-dark.png" alt="The Pen Overlay toolbar: mouse, pen, highlighter, shapes and eraser tools, eight colour swatches, a colour picker, the brush size, undo, redo, clear, show or hide drawings, and settings." />
 </p>
 
 Pen Overlay puts a transparent drawing layer over every monitor. Pick the pen
@@ -83,9 +80,12 @@ Each release lists SHA-256 checksums in `SHA256SUMS.txt`.
 3. Click the **mouse pointer** or press <kbd>Esc</kbd> to use your computer
    normally again. Your drawings stay until you clear or hide them.
 
-Drag the toolbar by its handle (the dots at its start). Closing it is
-done with **Hide toolbar** in settings or the shortcut; the tray icon brings
-it back.
+Drag the toolbar by its handle (the dots at its start). It stays exactly
+where you drop it, also over the taskbar; dropped within 16 px of a screen
+edge it snaps flush to that edge. Closing it is done with **Hide toolbar**
+in settings or the shortcut; the tray icon brings it back. Right-click the
+tray icon → **Reset toolbar position** moves it to the middle of the main
+screen.
 
 ### Toolbar
 
@@ -222,9 +222,10 @@ quits. The only files it writes are its settings and a small log.
   Attach it to bug reports.
 - **A shortcut does nothing**: another app holds it; settings mark it as
   taken. Choose another combination.
-- **The toolbar is gone**: press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>
-  or click the tray icon. If it was on a monitor that is no longer connected,
-  it moves back onto a connected one.
+- **The toolbar is gone or out of reach**: press
+  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>, click the tray icon, or
+  right-click the tray icon → **Reset toolbar position**. If it was on a
+  monitor that is no longer connected, it moves back onto a connected one.
 - **Linux: black instead of transparent**: enable your desktop's compositor.
 
 ## Develop
