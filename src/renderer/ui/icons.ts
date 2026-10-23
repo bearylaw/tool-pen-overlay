@@ -106,3 +106,25 @@ function withAttrs(tag: string, attrs: Record<string, string | number>): SVGElem
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
   return el;
 }
+
+/**
+ * An icon's shapes as SVG markup, for images built as strings (CSS cursors).
+ * `style` is applied to every shape; the data is constant, never user input.
+ */
+export function iconMarkup(name: IconName, style: string): string {
+  return (ICONS[name] as readonly Part[])
+    .map((part) => {
+      if ('path' in part) return `<path d="${part.path}" ${style}/>`;
+      if ('circle' in part) {
+        const [cx, cy, r] = part.circle;
+        return `<circle cx="${cx}" cy="${cy}" r="${r}" ${style}/>`;
+      }
+      if ('rect' in part) {
+        const [x, y, w, h, rx] = part.rect;
+        return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" ${style}/>`;
+      }
+      const [cx, cy, rx, ry] = part.ellipse;
+      return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${style}/>`;
+    })
+    .join('');
+}

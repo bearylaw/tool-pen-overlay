@@ -4,6 +4,7 @@ import { formatAccelerator, recordShortcut } from '../../shared/keymap';
 import {
   BEHAVIOR_FLAGS,
   type BehaviorFlag,
+  CURSOR_SIZES,
   LANGUAGES,
   ORIENTATIONS,
   SCALE_MAX,
@@ -51,6 +52,7 @@ export function settingsPanel(): View<AppState> {
   const labels = {
     orientation: h('span', { className: 'field-label' }),
     style: h('span', { className: 'field-label' }),
+    cursor: h('span', { className: 'field-label' }),
     scale: h('label', { className: 'field-label', attrs: { for: 'scale' } }),
     theme: h('span', { className: 'field-label' }),
     language: h('label', { className: 'field-label', attrs: { for: 'language' } }),
@@ -85,6 +87,9 @@ export function settingsPanel(): View<AppState> {
 
   const style = segmented(TOOLBAR_STYLES, (value) =>
     send({ type: 'setToolbarStyle', style: value }),
+  );
+  const cursorSize = segmented(CURSOR_SIZES, (value) =>
+    send({ type: 'setCursorSize', cursorSize: value }),
   );
   const pressure = toggle((enabled) => send({ type: 'setPressure', enabled }));
   const opacityValue = h('output', { className: 'muted' });
@@ -151,6 +156,7 @@ export function settingsPanel(): View<AppState> {
       field(labels.language, language),
     ]),
     section(headings.drawing, [
+      field(labels.cursor, cursorSize.el),
       pressure.el,
       field(h('div', { className: 'row between' }, [labels.opacity, opacityValue]), opacity),
     ]),
@@ -239,6 +245,12 @@ export function settingsPanel(): View<AppState> {
 
   function updateDrawing({ settings: s, runtime }: AppState, t: Translate): void {
     headings.drawing.textContent = t('section.drawing');
+    labels.cursor.textContent = t('cursor.label');
+    cursorSize.update(
+      s.drawing.cursorSize,
+      { standard: t('cursor.standard'), large: t('cursor.large') },
+      t('cursor.label'),
+    );
     pressure.update(s.drawing.pressure, t('pressure.label'));
     labels.opacity.textContent = t('size.opacity');
     const pct = Math.round(s.drawing.highlighterOpacity * 100);

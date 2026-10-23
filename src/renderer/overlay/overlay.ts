@@ -391,11 +391,14 @@ function applyState(next: AppState): void {
   const { drawMode, inkVisible } = next.runtime;
   if (!drawMode) finish(null);
   document.body.classList.toggle('hidden', !inkVisible);
-  const { tool, sizes, color } = next.settings.tool;
-  const key = drawMode ? `${tool}:${sizes[tool]}:${color}` : 'off';
+  const { tool, shape, sizes, color } = next.settings.tool;
+  const { cursorSize } = next.settings.drawing;
+  const key = drawMode ? `${tool}:${shape}:${sizes[tool]}:${color}:${cursorSize}` : 'off';
   if (key !== cursorKey) {
     cursorKey = key;
-    document.body.style.cursor = drawMode ? brushCursor(tool, sizes[tool], color) : 'default';
+    document.body.style.cursor = drawMode
+      ? brushCursor({ tool, shape, size: sizes[tool], color, cursorSize })
+      : 'default';
   }
 }
 

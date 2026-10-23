@@ -3,6 +3,7 @@ import { type HexColor, parseHex } from './color';
 import {
   activePalette,
   BEHAVIOR_FLAGS,
+  CURSOR_SIZES,
   clampOpacity,
   clampScale,
   clampSize,
@@ -58,6 +59,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('setTheme'), theme: z.enum(THEMES) }),
   z.object({ type: z.literal('setLanguage'), language: z.enum(LANGUAGES) }),
   z.object({ type: z.literal('setPressure'), enabled: z.boolean() }),
+  z.object({ type: z.literal('setCursorSize'), cursorSize: z.enum(CURSOR_SIZES) }),
   z.object({ type: z.literal('setHighlighterOpacity'), opacity: z.number().finite() }),
   z.object({ type: z.literal('setBehavior'), flag: z.enum(BEHAVIOR_FLAGS), enabled: z.boolean() }),
   z.object({ type: z.literal('setStartup'), mode: z.enum(STARTUP_MODES) }),
@@ -145,6 +147,8 @@ function reducePreferences(settings: Settings, command: Command): Settings {
       return { ...settings, toolbar: { ...settings.toolbar, theme: command.theme } };
     case 'setLanguage':
       return { ...settings, language: command.language };
+    case 'setCursorSize':
+      return { ...settings, drawing: { ...settings.drawing, cursorSize: command.cursorSize } };
     case 'setPressure':
       return { ...settings, drawing: { ...settings.drawing, pressure: command.enabled } };
     case 'setHighlighterOpacity':
