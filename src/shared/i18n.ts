@@ -67,9 +67,6 @@ const en = {
   'language.de': 'Deutsch',
   'section.drawing': 'Drawing',
   'pressure.label': 'Pen pressure (tablets and styluses)',
-  'lowLatency.label': 'Lowest latency',
-  'lowLatency.hint':
-    'Draws frames as soon as input arrives instead of waiting for the display. Uses a little more GPU. Takes effect after a restart.',
   'section.behavior': 'Behavior',
   'behavior.clearOnExit': 'Clear drawings when I stop drawing',
   'behavior.drawOnLaunch': 'Start in drawing mode',
@@ -191,9 +188,6 @@ const de: Readonly<Record<MessageKey, string>> = {
   'language.de': 'Deutsch',
   'section.drawing': 'Zeichnen',
   'pressure.label': 'Stiftdruck (Grafiktabletts und Stifte)',
-  'lowLatency.label': 'Geringste Verzögerung',
-  'lowLatency.hint':
-    'Zeichnet sofort bei jeder Eingabe statt auf den Bildschirm zu warten. Braucht etwas mehr Grafikleistung. Wirkt nach einem Neustart.',
   'section.behavior': 'Verhalten',
   'behavior.clearOnExit': 'Zeichnungen löschen, wenn ich das Zeichnen beende',
   'behavior.drawOnLaunch': 'Im Zeichenmodus starten',

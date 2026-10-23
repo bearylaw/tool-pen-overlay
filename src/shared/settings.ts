@@ -93,8 +93,6 @@ export interface Settings {
   readonly drawing: {
     readonly pressure: boolean;
     readonly highlighterOpacity: number;
-    /** Unthrottled, unsynchronised frames for the lowest ink latency; applied at launch. */
-    readonly lowLatency: boolean;
   };
   readonly behavior: Readonly<Record<BehaviorFlag, boolean>>;
   readonly shortcuts: Readonly<Record<ShortcutAction, string>>;
@@ -155,7 +153,7 @@ export const DEFAULT_SETTINGS: Settings = {
     theme: 'system',
     position: null,
   },
-  drawing: { pressure: true, highlighterOpacity: 0.35, lowLatency: true },
+  drawing: { pressure: true, highlighterOpacity: 0.35 },
   behavior: { clearOnExit: false, drawOnLaunch: false, launchAtLogin: false },
   shortcuts: DEFAULT_SHORTCUTS,
   language: 'system',
@@ -261,7 +259,6 @@ const settingsV1Schema = z.object({
   drawing: z
     .object({
       pressure: flag(DEFAULT_SETTINGS.drawing.pressure),
-      lowLatency: flag(DEFAULT_SETTINGS.drawing.lowLatency),
       highlighterOpacity: z
         .number()
         .finite()

@@ -160,11 +160,4 @@ describe('toolbar style and latency', () => {
     expect(compact.toolbar.style).toBe('compact');
     expect(run(compact, { type: 'setToolbarStyle', style: 'full' }).toolbar.style).toBe('full');
   });
-
-  it('turns low-latency rendering off and on', () => {
-    expect(DEFAULT_SETTINGS.drawing.lowLatency).toBe(true);
-    expect(
-      run(DEFAULT_SETTINGS, { type: 'setLowLatency', enabled: false }).drawing.lowLatency,
-    ).toBe(false);
-  });
 });
