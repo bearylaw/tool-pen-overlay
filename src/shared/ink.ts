@@ -179,3 +179,46 @@ function outlinePoints(stroke: Stroke): readonly Point[] {
   if (g.kind === 'arrow') return [g.from, g.to, ...arrowHead(g.from, g.to, stroke.size)];
   return [g.from, g.to];
 }
+
+/** A raw pointer sample with its timestamp in milliseconds. */
+export interface Sample {
+  readonly x: number;
+  readonly y: number;
+  readonly t: number;
+}
+
+/** Samples older than this (relative to the newest) do not count towards velocity. */
+const VELOCITY_WINDOW_MS = 24;
+
+/**
+ * Extrapolates where the pointer will be `aheadMs` after the newest sample,
+ * from its velocity over the last few milliseconds, capped at `maxDistance`.
+ * Drawing up to that point hides the time the frame takes to reach the
+ * screen. Returns `null` when there is not enough motion to predict.
+ */
+export function predictPoint(
+  samples: readonly Sample[],
+  aheadMs: number,
+  maxDistance: number,
+): { readonly x: number; readonly y: number } | null {
+  const last = samples[samples.length - 1];
+  if (last === undefined) return null;
+  let first: Sample | undefined;
+  for (let i = samples.length - 2; i >= 0; i--) {
+    const s = samples[i] as Sample;
+    if (last.t - s.t > VELOCITY_WINDOW_MS) break;
+    first = s;
+  }
+  if (first === undefined) return null;
+  const dt = last.t - first.t;
+  if (dt <= 0) return null;
+  let dx = ((last.x - first.x) / dt) * aheadMs;
+  let dy = ((last.y - first.y) / dt) * aheadMs;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 0.5) return null;
+  if (distance > maxDistance) {
+    dx *= maxDistance / distance;
+    dy *= maxDistance / distance;
+  }
+  return { x: last.x + dx, y: last.y + dy };
+}

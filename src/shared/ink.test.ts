@@ -7,6 +7,7 @@ import {
   distanceToSegment,
   hitsStroke,
   type Point,
+  predictPoint,
   pressureWidth,
   type Stroke,
 } from './ink';
@@ -123,5 +124,47 @@ describe('ink history', () => {
     const undone = undo(addStroke(EMPTY_INK, a));
     expect(addStroke(undone, b).redo).toEqual([]);
     expect(dropRedo(undone).redo).toEqual([]);
+  });
+});
+
+describe('predictPoint', () => {
+  it('extrapolates along the recent velocity', () => {
+    const samples = [
+      { x: 0, y: 0, t: 0 },
+      { x: 10, y: 0, t: 5 },
+      { x: 20, y: 0, t: 10 },
+    ];
+    expect(predictPoint(samples, 10, 100)).toEqual({ x: 40, y: 0 });
+  });
+
+  it('ignores samples older than the velocity window', () => {
+    const samples = [
+      { x: 500, y: 500, t: 0 },
+      { x: 0, y: 0, t: 100 },
+      { x: 0, y: 10, t: 110 },
+    ];
+    expect(predictPoint(samples, 10, 100)).toEqual({ x: 0, y: 20 });
+  });
+
+  it('caps the distance', () => {
+    const samples = [
+      { x: 0, y: 0, t: 0 },
+      { x: 100, y: 0, t: 1 },
+    ];
+    expect(predictPoint(samples, 10, 30)).toEqual({ x: 130, y: 0 });
+  });
+
+  it('predicts nothing when the pointer is still or has one sample', () => {
+    expect(predictPoint([{ x: 5, y: 5, t: 0 }], 10, 30)).toBeNull();
+    expect(
+      predictPoint(
+        [
+          { x: 5, y: 5, t: 0 },
+          { x: 5, y: 5, t: 8 },
+        ],
+        10,
+        30,
+      ),
+    ).toBeNull();
   });
 });

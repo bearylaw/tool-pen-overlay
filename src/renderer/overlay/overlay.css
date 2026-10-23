@@ -8,27 +8,23 @@ body {
   user-select: none;
 }
 
-canvas {
+canvas,
+#stroke {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
+}
+
+canvas {
   /* The pen draws; no panning, zooming, press-and-hold or flicks. */
   touch-action: none;
 }
 
-/* Events go to the top layer, which owns the gesture. */
+/* Events go to the live layer, which owns the gesture. */
 #ink,
-#predict {
+#tip {
   pointer-events: none;
-}
-
-#live {
-  z-index: 1;
-}
-
-#predict {
-  z-index: 2;
 }
 
 body.hidden canvas {

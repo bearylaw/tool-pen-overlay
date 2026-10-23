@@ -12,8 +12,11 @@ import {
 import {
   constrain,
   hitsStroke,
+  midpoint,
   type Point,
+  predictPoint,
   pressureWidth,
+  type Sample,
   type ShapeGeometry,
   type Stroke,
 } from '../../shared/ink';
@@ -23,55 +26,79 @@ import { api } from '../ui/api';
 import { brushCursor } from './cursor';
 import { dot, drawSegment, drawShape, drawStroke, prepare } from './paint';
 
+/** How far ahead of the newest sample the tip is drawn: about one frame. */
+const PREDICT_MS = 10;
+/** Samples kept for the velocity estimate. */
+const SAMPLE_HISTORY = 8;
+
+type Style = Omit<Stroke, 'geometry'>;
+
 /** A gesture in progress. */
 type Gesture =
   | {
       readonly kind: 'freehand';
-      readonly stroke: Omit<Stroke, 'geometry'>;
+      readonly stroke: Style;
       readonly points: Point[];
+      readonly samples: Sample[];
       readonly pressure: boolean;
     }
   | {
       readonly kind: 'shape';
-      readonly stroke: Omit<Stroke, 'geometry'>;
+      readonly stroke: Style;
       readonly shape: Shape;
       readonly from: Point;
       to: Point;
     }
   | { readonly kind: 'erase'; readonly radius: number; readonly hit: Set<number> };
 
+/** An axis-aligned area in CSS pixels that needs clearing later. */
+interface Box {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 function layer(
   id: string,
+  parent: HTMLElement,
   options: CanvasRenderingContext2DSettings,
 ): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const canvas = document.createElement('canvas');
   canvas.id = id;
-  document.body.append(canvas);
+  parent.append(canvas);
   const ctx = canvas.getContext('2d', options);
   if (ctx === null) throw new Error(`canvas 2d context unavailable for #${id}`);
   return [canvas, ctx];
 }
 
-// Three layers: finished ink, the stroke being drawn, and a short predicted
-// extension of it. The live layers are low-latency (desynchronized) canvases.
-const [inkCanvas, inkCtx] = layer('ink', { alpha: true });
-const [liveCanvas, liveCtx] = layer('live', { alpha: true, desynchronized: true });
-const [predictCanvas, predictCtx] = layer('predict', { alpha: true, desynchronized: true });
+// Finished ink sits on its own layer and is only repainted when strokes are
+// removed. The stroke being drawn and its predicted tip are low-latency
+// (desynchronized) canvases inside one group, so a translucent highlighter
+// gets its opacity once for both and never darkens where they meet.
+const [inkCanvas, inkCtx] = layer('ink', document.body, { alpha: true });
+const group = document.createElement('div');
+group.id = 'stroke';
+document.body.append(group);
+const [liveCanvas, liveCtx] = layer('live', group, { alpha: true, desynchronized: true });
+const [tipCanvas, tipCtx] = layer('tip', group, { alpha: true, desynchronized: true });
 
 let state: AppState | null = null;
 let ink: InkState = EMPTY_INK;
 let gesture: Gesture | null = null;
 let nextId = 1;
-let dpr = 1;
+let liveBox: Box | null = null;
+let tipBox: Box | null = null;
+let cursorKey = '';
 
 function resize(): void {
-  dpr = window.devicePixelRatio || 1;
+  const dpr = window.devicePixelRatio || 1;
   const width = Math.round(window.innerWidth * dpr);
   const height = Math.round(window.innerHeight * dpr);
   for (const [canvas, ctx] of [
     [inkCanvas, inkCtx],
     [liveCanvas, liveCtx],
-    [predictCanvas, predictCtx],
+    [tipCanvas, tipCtx],
   ] as const) {
     canvas.width = width;
     canvas.height = height;
@@ -80,30 +107,62 @@ function resize(): void {
   renderInk();
 }
 
-function clearLayer(ctx: CanvasRenderingContext2D): void {
+function clearAll(ctx: CanvasRenderingContext2D): void {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.restore();
 }
 
-function renderInk(): void {
-  clearLayer(inkCtx);
-  const hidden = gesture?.kind === 'erase' ? gesture.hit : null;
-  for (const stroke of ink.strokes)
-    if (hidden === null || !hidden.has(stroke.id)) drawStroke(inkCtx, stroke);
+/** Clears only the area last drawn into, so each frame touches few pixels. */
+function clearBox(ctx: CanvasRenderingContext2D, box: Box | null): void {
+  if (box === null) return;
+  ctx.clearRect(box.minX - 1, box.minY - 1, box.maxX - box.minX + 2, box.maxY - box.minY + 2);
 }
 
-function setInk(next: InkState, committed: boolean): void {
-  if (next === ink) return;
-  ink = next;
-  renderInk();
+function boxAround(points: readonly { x: number; y: number }[], pad: number): Box {
+  const box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  for (const p of points) grow(box, p, pad);
+  return box;
+}
+
+function grow(box: Box, p: { x: number; y: number }, pad: number): void {
+  box.minX = Math.min(box.minX, p.x - pad);
+  box.minY = Math.min(box.minY, p.y - pad);
+  box.maxX = Math.max(box.maxX, p.x + pad);
+  box.maxY = Math.max(box.maxY, p.y + pad);
+}
+
+function renderInk(): void {
+  clearAll(inkCtx);
+  const hidden = gesture?.kind === 'erase' ? gesture.hit : null;
+  for (const stroke of ink.strokes) {
+    if (hidden === null || !hidden.has(stroke.id)) drawStroke(inkCtx, stroke);
+  }
+}
+
+function report(committed: boolean): void {
   api.reportInk({
     strokeCount: ink.strokes.length,
     canUndo: ink.undo.length > 0,
     canRedo: ink.redo.length > 0,
     committed,
   });
+}
+
+/** Replaces the strokes (undo, redo, erase, clear) and repaints them all. */
+function setInk(next: InkState, committed: boolean): void {
+  if (next === ink) return;
+  ink = next;
+  renderInk();
+  report(committed);
+}
+
+/** Adds a finished stroke by painting just that stroke on top. */
+function commit(stroke: Stroke): void {
+  ink = addStroke(ink, stroke);
+  drawStroke(inkCtx, stroke);
+  report(true);
 }
 
 function pointOf(event: PointerEvent): Point {
@@ -115,7 +174,7 @@ function pointOf(event: PointerEvent): Point {
   };
 }
 
-function strokeStyle(current: AppState): Omit<Stroke, 'geometry'> {
+function strokeStyle(current: AppState): Style {
   const { tool, color, sizes } = current.settings.tool;
   return {
     id: nextId++,
@@ -143,71 +202,107 @@ function begin(event: PointerEvent): void {
     return;
   }
   const stroke = strokeStyle(state);
-  liveCanvas.style.opacity = String(stroke.opacity);
+  // Opacity only when needed: an effect on the group can take the canvases
+  // off the fastest presentation path.
+  group.style.opacity = stroke.opacity < 1 ? String(stroke.opacity) : '';
   prepare(liveCtx, stroke.color);
-  prepare(predictCtx, stroke.color);
-  predictCanvas.style.opacity = String(stroke.opacity);
+  prepare(tipCtx, stroke.color);
   if (tool === 'shape') {
     gesture = { kind: 'shape', stroke, shape, from: at, to: at };
     return;
   }
   const pressure = tool === 'pen' && event.pointerType === 'pen' && state.settings.drawing.pressure;
-  gesture = { kind: 'freehand', stroke, points: [at], pressure };
-  dot(liveCtx, at, pressureWidth(stroke.size, at.p, pressure));
+  gesture = {
+    kind: 'freehand',
+    stroke,
+    points: [at],
+    samples: [{ x: at.x, y: at.y, t: event.timeStamp }],
+    pressure,
+  };
+  const width = pressureWidth(stroke.size, at.p, pressure);
+  dot(liveCtx, at, width);
+  liveBox = boxAround([at], width);
 }
 
 function extend(event: PointerEvent): void {
   if (gesture === null) return;
-  const samples = event.getCoalescedEvents?.() ?? [];
-  const events = samples.length > 0 ? samples : [event];
+  const coalesced = event.getCoalescedEvents?.() ?? [];
+  const events = coalesced.length > 0 ? coalesced : [event];
   if (gesture.kind === 'erase') {
     for (const e of events) eraseAt(pointOf(e));
     return;
   }
   if (gesture.kind === 'shape') {
-    const last = events[events.length - 1] ?? event;
-    gesture.to = pointOf(last);
-    drawLiveShape(gesture, last.shiftKey);
+    gesture.to = pointOf(events[events.length - 1] ?? event);
+    drawLiveShape(gesture, event.shiftKey);
     return;
   }
-  const { points, stroke, pressure } = gesture;
   if (event.shiftKey) {
     // Shift turns the stroke into a straight line from where it started.
-    const first = points[0] as Point;
-    gesture = { kind: 'shape', stroke, shape: 'line', from: first, to: pointOf(event) };
-    clearLayer(predictCtx);
+    const { points, stroke } = gesture;
+    clearBox(liveCtx, liveBox);
+    clearBox(tipCtx, tipBox);
+    tipBox = null;
+    gesture = {
+      kind: 'shape',
+      stroke,
+      shape: 'line',
+      from: points[0] as Point,
+      to: pointOf(event),
+    };
     drawLiveShape(gesture, true);
     return;
   }
+  extendFreehand(gesture, events);
+}
+
+function extendFreehand(
+  g: Extract<Gesture, { kind: 'freehand' }>,
+  events: readonly PointerEvent[],
+): void {
+  const { points, samples, stroke, pressure } = g;
+  const pad = stroke.size + 2;
   for (const e of events) {
     const p = pointOf(e);
     const last = points[points.length - 1] as Point;
     if (Math.abs(p.x - last.x) < 0.5 && Math.abs(p.y - last.y) < 0.5) continue;
     points.push(p);
+    samples.push({ x: p.x, y: p.y, t: e.timeStamp });
+    if (samples.length > SAMPLE_HISTORY) samples.shift();
     drawSegment(liveCtx, points, points.length - 1, stroke.size, pressure);
+    if (liveBox !== null) grow(liveBox, p, pad);
   }
-  drawPrediction(event, points, stroke.size);
+  drawTip(g);
 }
 
-/** Extends the line a few milliseconds ahead to hide the remaining input latency. */
-function drawPrediction(event: PointerEvent, points: readonly Point[], size: number): void {
-  clearLayer(predictCtx);
-  const predicted = event.getPredictedEvents?.() ?? [];
-  const last = points[points.length - 1];
-  const target = predicted[predicted.length - 1];
-  if (last === undefined || target === undefined) return;
-  const before = points[points.length - 2] ?? last;
-  predictCtx.lineWidth = size;
-  predictCtx.beginPath();
-  predictCtx.moveTo((before.x + last.x) / 2, (before.y + last.y) / 2);
-  predictCtx.lineTo(last.x, last.y);
-  predictCtx.lineTo(target.clientX, target.clientY);
-  predictCtx.stroke();
+/**
+ * The smoothed curve stops half a sample behind the pointer. The tip layer
+ * closes that gap and runs a little ahead along the current velocity, so
+ * the ink stays under the pointer even when moving fast.
+ */
+function drawTip(g: Extract<Gesture, { kind: 'freehand' }>): void {
+  clearBox(tipCtx, tipBox);
+  tipBox = null;
+  const last = g.points[g.points.length - 1];
+  const before = g.points[g.points.length - 2];
+  if (last === undefined || before === undefined) return;
+  const start = midpoint(before, last);
+  const ahead = predictPoint(g.samples, PREDICT_MS, Math.max(24, g.stroke.size * 4));
+  tipCtx.lineWidth = pressureWidth(g.stroke.size, last.p, g.pressure);
+  tipCtx.beginPath();
+  tipCtx.moveTo(start.x, start.y);
+  tipCtx.lineTo(last.x, last.y);
+  if (ahead !== null) tipCtx.lineTo(ahead.x, ahead.y);
+  tipCtx.stroke();
+  tipBox = boxAround(ahead === null ? [start, last] : [start, last, ahead], tipCtx.lineWidth + 2);
 }
 
 function drawLiveShape(g: Extract<Gesture, { kind: 'shape' }>, constrained: boolean): void {
-  clearLayer(liveCtx);
-  drawShape(liveCtx, shapeOf(g, constrained), g.stroke.size);
+  clearBox(liveCtx, liveBox);
+  const geometry = shapeOf(g, constrained);
+  drawShape(liveCtx, geometry, g.stroke.size);
+  // Arrow heads reach up to four line widths past the end point.
+  liveBox = boxAround([geometry.from, geometry.to], g.stroke.size * 5 + 4);
 }
 
 function shapeOf(g: Extract<Gesture, { kind: 'shape' }>, constrained: boolean): ShapeGeometry {
@@ -226,32 +321,37 @@ function eraseAt(at: Point): void {
   if (changed) renderInk();
 }
 
+function clearLive(): void {
+  clearBox(liveCtx, liveBox);
+  clearBox(tipCtx, tipBox);
+  liveBox = null;
+  tipBox = null;
+}
+
 function finish(event: PointerEvent | null): void {
   const done = gesture;
   if (done === null) return;
   gesture = null;
-  clearLayer(predictCtx);
   if (done.kind === 'erase') {
     const next = eraseStrokes(ink, done.hit);
     if (next === ink) renderInk();
     else setInk(next, true);
     return;
   }
+  // Paint the finished stroke first, then clear the live layers, so no frame
+  // shows the stroke missing.
   if (done.kind === 'shape') {
     const geometry = shapeOf(done, event?.shiftKey ?? false);
-    clearLayer(liveCtx);
-    if (geometry.from.x === geometry.to.x && geometry.from.y === geometry.to.y) return;
-    setInk(addStroke(ink, { ...done.stroke, geometry }), true);
-    return;
-  }
-  setInk(
-    addStroke(ink, {
+    if (geometry.from.x !== geometry.to.x || geometry.from.y !== geometry.to.y) {
+      commit({ ...done.stroke, geometry });
+    }
+  } else {
+    commit({
       ...done.stroke,
       geometry: { kind: 'freehand', points: done.points, pressure: done.pressure },
-    }),
-    true,
-  );
-  clearLayer(liveCtx);
+    });
+  }
+  clearLive();
 }
 
 function obey(order: InkOrder): void {
@@ -270,7 +370,11 @@ function applyState(next: AppState): void {
   if (!drawMode) finish(null);
   document.body.classList.toggle('hidden', !inkVisible);
   const { tool, sizes, color } = next.settings.tool;
-  document.body.style.cursor = drawMode ? brushCursor(tool, sizes[tool], color) : 'default';
+  const key = drawMode ? `${tool}:${sizes[tool]}:${color}` : 'off';
+  if (key !== cursorKey) {
+    cursorKey = key;
+    document.body.style.cursor = drawMode ? brushCursor(tool, sizes[tool], color) : 'default';
+  }
 }
 
 // pointerrawupdate arrives as soon as the OS reports movement instead of once
