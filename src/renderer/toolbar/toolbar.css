@@ -1,7 +1,7 @@
-/* The window is sized to .frame; its padding leaves room for the shadow. */
+/* The window is sized exactly to the bar: no shadow, no transparent margin
+   that would block clicks or look like a halo around the toolbar. */
 .frame {
   display: inline-block;
-  padding: 6px 8px 10px;
 }
 
 .bar {
@@ -10,6 +10,7 @@
   gap: var(--gap);
   padding: 4px;
   width: max-content;
+  box-shadow: none;
 }
 
 .bar.vertical {
