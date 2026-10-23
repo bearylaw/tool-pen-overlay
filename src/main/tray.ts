@@ -12,6 +12,7 @@ export interface TrayActions {
   readonly toggleDraw: () => void;
   readonly toggleToolbar: () => void;
   readonly showToolbar: () => void;
+  readonly resetPosition: () => void;
   readonly clear: () => void;
   readonly openSettings: () => void;
   readonly quit: () => void;
@@ -47,6 +48,7 @@ export function createTray(iconPath: string, actions: TrayActions): AppTray {
             checked: model.toolbarVisible,
             click: actions.toggleToolbar,
           },
+          { label: t('tray.resetPosition'), click: actions.resetPosition },
           { label: t('tray.clear'), click: actions.clear },
           { label: t('tray.settings'), click: actions.openSettings },
           { type: 'separator' },

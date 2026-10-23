@@ -115,6 +115,10 @@ export function createController(options: ControllerOptions): Controller {
     toggleDraw: () => setDrawMode(!runtime.drawMode),
     toggleToolbar: () => setToolbarVisible(!runtime.toolbarVisible),
     showToolbar: () => setToolbarVisible(true),
+    resetPosition: () => {
+      setToolbarVisible(true);
+      toolbar.resetPosition();
+    },
     clear,
     openSettings: () => {
       setToolbarVisible(true);
@@ -381,6 +385,7 @@ export function createController(options: ControllerOptions): Controller {
     showToolbar: () => setToolbarVisible(true),
     onDisplaysChanged: () => {
       overlays.sync();
+      toolbar.refit();
       toolbar.raise();
     },
     shutdown: () => {

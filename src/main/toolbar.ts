@@ -1,7 +1,7 @@
 import { BrowserWindow, screen } from 'electron';
 import { CHANNELS } from '../shared/channels';
 import type { AppState, ContentSize, PanelKind, Rect } from '../shared/ipc';
-import { clampPosition, pickArea, placePanel } from '../shared/placement';
+import { centerIn, clampPosition, pickArea, placePanel, snapToEdges } from '../shared/placement';
 import type { Orientation, Position } from '../shared/settings';
 import type { Logger } from './logger';
 import { type Page, pageUrl, securePreferences } from './web';
@@ -18,6 +18,10 @@ export interface ToolbarManager {
   readonly setVisible: (visible: boolean) => void;
   readonly focus: () => void;
   readonly raise: () => void;
+  /** Re-checks the toolbar fits after displays changed. */
+  readonly refit: () => void;
+  /** Moves the toolbar to the centre of the primary display. */
+  readonly resetPosition: () => void;
   /** Runs a native dialog owned by the toolbar so it shows above the overlays. */
   readonly withDialogParent: <T>(run: (parent: BrowserWindow) => Promise<T>) => Promise<T>;
   readonly pageOf: (webContentsId: number) => Page | null;
@@ -76,12 +80,16 @@ export function createToolbar(options: ToolbarOptions): ToolbarManager {
   let closedOnBlurAt = 0;
   let closedKind: PanelKind | null = null;
   let movingProgrammatically = false;
-  let placed = false;
+  // Where the user put the toolbar. The source of truth, so re-measuring
+  // never nudges it (reading the window bounds back can drift by a pixel).
+  let position: Position | null = null;
+  let appliedSize: { width: number; height: number } | null = null;
   let wantVisible = true;
   let dialogOpen = false;
   let lastState: AppState | null = null;
 
-  const workAreas = (): Rect[] => screen.getAllDisplays().map((d) => d.workArea);
+  // Whole displays, not work areas: the toolbar may sit over the taskbar.
+  const displayAreas = (): Rect[] => screen.getAllDisplays().map((d) => d.bounds);
 
   const setBounds = (win: BrowserWindow, bounds: Rect): void => {
     movingProgrammatically = true;
@@ -94,17 +102,23 @@ export function createToolbar(options: ToolbarOptions): ToolbarManager {
     movingProgrammatically = false;
   };
 
-  const layoutToolbar = (): void => {
+  /**
+   * Sizes the toolbar to its content. It keeps its position unless it would
+   * no longer fit on a display, which only happens when its size changes
+   * (layout, style, scale) or a display goes away.
+   */
+  const layoutToolbar = (force = false): void => {
     if (toolbarSize === null) return;
     const width = Math.ceil(toolbarSize.width * layout.scale);
     const height = Math.ceil(toolbarSize.height * layout.scale);
-    const current = toolbar.getBounds();
-    const start = placed ? current : initialPosition(options.position, width);
+    const sameSize = appliedSize?.width === width && appliedSize.height === height;
+    if (sameSize && position !== null && !force) return;
+    const start = position ?? options.position ?? topCentre(width);
     const area =
-      pickArea({ ...start, width, height }, workAreas()) ?? screen.getPrimaryDisplay().workArea;
-    const position = clampPosition(start, { width, height }, area);
+      pickArea({ ...start, width, height }, displayAreas()) ?? screen.getPrimaryDisplay().bounds;
+    position = clampPosition(start, { width, height }, area);
+    appliedSize = { width, height };
     setBounds(toolbar, { ...position, width, height });
-    placed = true;
     if (!toolbar.isVisible() && wantVisible) toolbar.showInactive();
   };
 
@@ -156,8 +170,13 @@ export function createToolbar(options: ToolbarOptions): ToolbarManager {
     }
   });
   toolbar.on('moved', () => {
-    const { x, y } = toolbar.getBounds();
-    options.onMoved({ x, y });
+    if (movingProgrammatically) return;
+    const bounds = toolbar.getBounds();
+    const area = pickArea(bounds, displayAreas()) ?? screen.getPrimaryDisplay().bounds;
+    position = snapToEdges(bounds, bounds, area);
+    if (position.x !== bounds.x || position.y !== bounds.y)
+      setBounds(toolbar, { ...bounds, ...position });
+    options.onMoved(position);
   });
 
   for (const [win, page] of [
@@ -226,6 +245,14 @@ export function createToolbar(options: ToolbarOptions): ToolbarManager {
     focus: () => {
       if (wantVisible && toolbar.isVisible() && panelKind === null) toolbar.focus();
     },
+    refit: () => layoutToolbar(true),
+    resetPosition: () => {
+      if (appliedSize === null) return;
+      hidePanel();
+      position = centered(appliedSize.width, appliedSize.height);
+      setBounds(toolbar, { ...position, ...appliedSize });
+      options.onMoved(position);
+    },
     raise: () => {
       toolbar.moveTop();
       if (panel.isVisible()) panel.moveTop();
@@ -243,8 +270,13 @@ export function createToolbar(options: ToolbarOptions): ToolbarManager {
   };
 }
 
-function initialPosition(saved: Position | null, width: number): Position {
-  if (saved !== null) return saved;
+/** Top centre of the primary display, where the toolbar starts the first time. */
+function topCentre(width: number): Position {
   const area = screen.getPrimaryDisplay().workArea;
   return { x: area.x + Math.round((area.width - width) / 2), y: area.y + 16 };
+}
+
+/** Centre of the primary display, where a reset toolbar goes. */
+function centered(width: number, height: number): Position {
+  return centerIn({ width, height }, screen.getPrimaryDisplay().workArea);
 }

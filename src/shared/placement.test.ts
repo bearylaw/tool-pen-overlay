@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { messageKeys, resolveLocale, translate } from './i18n';
-import { clampPosition, PANEL_GAP, pickArea, placePanel } from './placement';
+import { centerIn, clampPosition, PANEL_GAP, pickArea, placePanel, snapToEdges } from './placement';
 
 const workArea = { x: 0, y: 0, width: 1920, height: 1040 };
 const panel = { width: 300, height: 400 };
@@ -29,6 +29,39 @@ describe('placePanel', () => {
     expect(placePanel({ anchor, toolbar, panel, workArea, orientation: 'vertical' })).toEqual({
       x: 1860 - PANEL_GAP - 300,
       y: 640,
+    });
+  });
+});
+
+describe('snapToEdges', () => {
+  const display = { x: 0, y: 0, width: 3440, height: 1440 };
+  const bar = { width: 600, height: 44 };
+
+  it('snaps flush to the bottom and right edges when dropped near them', () => {
+    expect(snapToEdges({ x: 2830, y: 1390 }, bar, display)).toEqual({ x: 2840, y: 1396 });
+  });
+
+  it('snaps flush to the top and left edges', () => {
+    expect(snapToEdges({ x: 9, y: -5 }, bar, display)).toEqual({ x: 0, y: 0 });
+  });
+
+  it('leaves a toolbar dropped away from the edges exactly where it is', () => {
+    expect(snapToEdges({ x: 1200, y: 700 }, bar, display)).toEqual({ x: 1200, y: 700 });
+  });
+
+  it('snaps to the edges of a second display', () => {
+    const right = { x: 3440, y: 0, width: 1920, height: 1080 };
+    expect(snapToEdges({ x: 3450, y: 1030 }, bar, right)).toEqual({ x: 3440, y: 1036 });
+  });
+});
+
+describe('centerIn', () => {
+  it('centres a box in an area that does not start at zero', () => {
+    expect(
+      centerIn({ width: 400, height: 50 }, { x: 1920, y: 0, width: 2560, height: 1400 }),
+    ).toEqual({
+      x: 3000,
+      y: 675,
     });
   });
 });

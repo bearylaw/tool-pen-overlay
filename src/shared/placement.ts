@@ -60,6 +60,47 @@ export function clampPosition(
   return { x: Math.round(x), y: Math.round(y) };
 }
 
+/** Distance in DIP within which a dropped toolbar snaps to a display edge. */
+export const SNAP_DISTANCE = 16;
+
+/**
+ * Snaps a box flush to any edge of the area it is within `distance` of, so
+ * a toolbar dropped near an edge lines up with the last pixel of the screen.
+ * The box is also kept fully on the area.
+ */
+export function snapToEdges(
+  position: Position,
+  size: { readonly width: number; readonly height: number },
+  area: Rect,
+  distance = SNAP_DISTANCE,
+): Position {
+  const snap = (value: number, start: number, length: number, extent: number): number => {
+    const end = start + extent - length;
+    if (Math.abs(value - start) <= distance) return start;
+    if (Math.abs(value - end) <= distance) return end;
+    return value;
+  };
+  return clampPosition(
+    {
+      x: snap(position.x, area.x, size.width, area.width),
+      y: snap(position.y, area.y, size.height, area.height),
+    },
+    size,
+    area,
+  );
+}
+
+/** Position that centres a box in the area. */
+export function centerIn(
+  size: { readonly width: number; readonly height: number },
+  area: Rect,
+): Position {
+  return {
+    x: Math.round(area.x + (area.width - size.width) / 2),
+    y: Math.round(area.y + (area.height - size.height) / 2),
+  };
+}
+
 /**
  * The work area a window belongs to: the one it overlaps most, else the one
  * nearest its centre (a monitor was unplugged since the position was saved).

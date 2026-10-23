@@ -90,6 +90,37 @@ try {
   await toolbar.screenshot({ path: join(out, 'toolbar.png'), omitBackground: true });
   step('toolbar renders');
 
+  // Regression: a toolbar dropped at the bottom edge, over the taskbar,
+  // used to jump up as soon as it re-rendered (pressing the pen, drawing).
+  const toolbarBounds = () =>
+    app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .find((w) => w.webContents.getURL().startsWith('app://toolbar/'))
+        .getBounds(),
+    );
+  const dropped = await app.evaluate(({ BrowserWindow, screen }) => {
+    const win = BrowserWindow.getAllWindows().find((w) =>
+      w.webContents.getURL().startsWith('app://toolbar/'),
+    );
+    const display = screen.getPrimaryDisplay().bounds;
+    const { width, height } = win.getBounds();
+    // Dropped 7 px short of the bottom edge: snaps flush to it.
+    win.setBounds({ x: display.x + 40, y: display.y + display.height - height - 7, width, height });
+    win.emit('moved');
+    return { bounds: win.getBounds(), bottom: display.y + display.height };
+  });
+  assert.equal(dropped.bounds.y + dropped.bounds.height, dropped.bottom);
+  await button('Pen').click();
+  await stroke(overlays[0], [
+    [200, 200],
+    [260, 240],
+  ]);
+  await button('Undo').click();
+  await button('Mouse: stop drawing').click();
+  await sleep(300);
+  assert.deepEqual(await toolbarBounds(), dropped.bounds);
+  step('toolbar snaps flush to the bottom edge and stays there, also over the taskbar');
+
   await button('Pen').click();
   await sleep(150);
   assert.match(await overlay.evaluate(() => document.body.style.cursor), /url\(/);
