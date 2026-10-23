@@ -27,9 +27,11 @@ touches the network.
 - **Draw over everything**: one transparent layer per monitor, above other
   windows and the taskbar (exclusive full-screen games excepted). Monitors
   with different scaling are handled.
-- **Low latency**: input is read from raw pointer updates with coalesced
-  samples, drawn on low-latency canvases, and a short predicted segment
-  hides the rest of the delay.
+- **Low latency**: every raw pointer update is drawn the moment it arrives on
+  low-latency canvases that present without waiting for the display; the
+  line is extended a few milliseconds ahead along your movement so it stays
+  under the pointer even when you draw fast; finished strokes are added
+  without repainting the rest.
 - **Tools**: pen (with tablet pressure), highlighter, line, arrow,
   rectangle, ellipse, and an eraser that removes whole strokes. Hold
   <kbd>Shift</kbd> for straight angles, squares and circles. The eraser end
@@ -41,8 +43,8 @@ touches the network.
 - **Brush sizes** from 1 to 96 px, remembered separately for each tool.
 - **Undo and redo** across all monitors, **clear**, and **hide drawings**
   without losing them.
-- **Draggable toolbar**, horizontal or vertical, scalable from 75 % to 200 %,
-  light, dark or following the system.
+- **Draggable toolbar**, horizontal or vertical, full or **compact**,
+  scalable from 75 % to 200 %, light, dark or following the system.
 - **Global shortcuts** you can change, so drawing starts from any app.
 - **Your defaults**: save the current tool, colour and size as your default
   and choose whether Pen Overlay starts with them or with what you used
@@ -91,12 +93,26 @@ it back.
 | Mouse pointer | Stop drawing; clicks go to the apps underneath |
 | Pen, Highlighter, Eraser | Pick the tool and start drawing |
 | Shapes | Pick the shape tool; click again (or right-click) to choose line, arrow, rectangle or ellipse |
-| Colour dots | The active palette; click one to use it |
+| Colour dots | The active palette; click one to use it, right-click for the colour picker |
 | Rainbow ring | Colour picker and palette editor |
 | Size dot | Brush size; scroll over it to change the size quickly |
 | Undo, Redo, Clear | Across all monitors |
 | Eye | Hide or show drawings without deleting them |
 | Sliders | Settings |
+
+### Compact toolbar
+
+**Settings → Toolbar → Style → Compact** keeps only the essentials: mouse,
+pen, highlighter, eraser, the first two colours of the active palette,
+undo, redo, clear, hide drawings and settings.
+
+<p align="center">
+  <img src="docs/images/toolbar-compact-dark.png" alt="The compact toolbar: mouse, pen, highlighter and eraser, two colours, undo, redo, clear, hide drawings and settings." />
+</p>
+
+Reorder the palette to choose which two colours appear. Right-click either
+colour (in both styles) to open the colour picker and palettes; shapes and
+brush size stay on the keyboard (<kbd>S</kbd>, <kbd>[</kbd> <kbd>]</kbd>).
 
 ### Keys while drawing
 
@@ -150,8 +166,8 @@ Open the colour panel with the rainbow ring.
 
 | Section | What you can change |
 |---|---|
-| Toolbar | Horizontal or vertical layout, size (75–200 %), theme, language |
-| Drawing | Pen pressure on or off, highlighter opacity |
+| Toolbar | Full or compact style, horizontal or vertical layout, size (75–200 %), theme, language |
+| Drawing | Pen pressure on or off, lowest latency (on by default; takes effect after a restart), highlighter opacity |
 | Behaviour | Clear drawings when you stop drawing, start in drawing mode, launch at login (Windows, macOS) |
 | Defaults | Start with the last used tool or with your saved defaults; save the current tool, colour and size as your default |
 | Global shortcuts | See above |

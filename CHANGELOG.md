@@ -15,13 +15,17 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Pen with tablet pressure, highlighter, line, arrow, rectangle, ellipse and
   stroke eraser; Shift for straight angles, squares and circles; the eraser
   end of a stylus erases.
-- Low-latency input: raw pointer updates, coalesced samples, low-latency
-  canvases and predicted strokes.
+- Low-latency input: raw pointer updates drawn immediately on low-latency
+  canvases, a predicted tip that keeps the line under the pointer when
+  drawing fast, finished strokes added without a full repaint, and an
+  optional (default on) unsynchronised, uncapped frame mode.
 - Undo, redo and clear across all monitors; hide and show drawings.
-- Draggable toolbar, horizontal or vertical, 75–200 % size, light, dark or
-  system theme.
+- Draggable toolbar, horizontal or vertical, full or compact (mouse, pen,
+  highlighter, eraser, two colours, undo, redo, clear, hide, settings),
+  75–200 % size, light, dark or system theme.
 - Colour picker with hex input and eyedropper; named palettes you can add
-  to, reorder, rename and delete; 1–9 select palette colours.
+  to, reorder, rename and delete; 1–9 select palette colours; right-click
+  a colour on the toolbar to open the picker.
 - Brush size per tool, 1–96 px, with presets and mouse-wheel adjustment.
 - Global shortcuts, changeable in settings, with conflict detection.
 - Per-user defaults: save the current tool as default and choose whether
