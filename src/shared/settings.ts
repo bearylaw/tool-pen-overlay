@@ -101,6 +101,8 @@ export interface Settings {
     readonly highlighterOpacity: number;
     readonly cursorStyle: CursorStyle;
     readonly cursorSize: CursorSize;
+    /** Show a still image of each screen under the ink while drawing. */
+    readonly freezeScreen: boolean;
   };
   readonly behavior: Readonly<Record<BehaviorFlag, boolean>>;
   readonly shortcuts: Readonly<Record<ShortcutAction, string>>;
@@ -166,6 +168,7 @@ export const DEFAULT_SETTINGS: Settings = {
     highlighterOpacity: 0.35,
     cursorStyle: 'target',
     cursorSize: 'standard',
+    freezeScreen: false,
   },
   behavior: { clearOnExit: false, drawOnLaunch: false, launchAtLogin: false },
   shortcuts: DEFAULT_SHORTCUTS,
@@ -274,6 +277,7 @@ const settingsV1Schema = z.object({
       pressure: flag(DEFAULT_SETTINGS.drawing.pressure),
       cursorStyle: z.enum(CURSOR_STYLES).catch(DEFAULT_SETTINGS.drawing.cursorStyle),
       cursorSize: z.enum(CURSOR_SIZES).catch(DEFAULT_SETTINGS.drawing.cursorSize),
+      freezeScreen: flag(DEFAULT_SETTINGS.drawing.freezeScreen),
       highlighterOpacity: z
         .number()
         .finite()

@@ -84,6 +84,13 @@ function layer(
 // 200 Hz and more). Every event only records samples; painting happens once
 // per frame, right before it is composited. Painting per event made the GPU
 // fall behind and the lag grow the longer a stroke lasted.
+// The frozen screen, when the user wants a still picture to draw on, lies
+// under everything at its own resolution and is stretched to fit.
+const frozenCanvas = document.createElement('canvas');
+frozenCanvas.id = 'frozen';
+document.body.append(frozenCanvas);
+const frozenCtx = frozenCanvas.getContext('bitmaprenderer');
+if (frozenCtx === null) throw new Error('canvas bitmaprenderer context unavailable for #frozen');
 const [inkCanvas, inkCtx] = layer('ink', document.body, { alpha: true });
 const group = document.createElement('div');
 group.id = 'stroke';
@@ -100,6 +107,9 @@ let tipBox: Box | null = null;
 let cursorKey = '';
 let frameRequested = false;
 let inkDirty = false;
+/** Bumped whenever a frozen image is received or dropped, so a late decode is discarded. */
+let frozenGeneration = 0;
+let frozenShown = false;
 
 function resize(): void {
   const dpr = window.devicePixelRatio || 1;
@@ -386,10 +396,33 @@ function obey(order: InkOrder): void {
   setInk(apply(ink), false);
 }
 
+/** Shows a still image of this display under the ink until drawing stops. */
+async function showFrozen(image: Uint8Array<ArrayBuffer>): Promise<void> {
+  const generation = ++frozenGeneration;
+  const bitmap = await createImageBitmap(new Blob([image], { type: 'image/jpeg' }));
+  if (generation !== frozenGeneration || state?.runtime.drawMode === false) {
+    bitmap.close();
+    return;
+  }
+  frozenCtx?.transferFromImageBitmap(bitmap);
+  frozenShown = true;
+}
+
+function dropFrozen(): void {
+  frozenGeneration++;
+  if (!frozenShown) return;
+  frozenShown = false;
+  frozenCtx?.transferFromImageBitmap(null);
+}
+
 function applyState(next: AppState): void {
   state = next;
   const { drawMode, inkVisible } = next.runtime;
-  if (!drawMode) finish(null);
+  if (!drawMode) {
+    finish(null);
+    dropFrozen();
+  }
+  document.body.classList.toggle('frozen', drawMode && next.settings.drawing.freezeScreen);
   document.body.classList.toggle('hidden', !inkVisible);
   const { tool, shape, sizes, color } = next.settings.tool;
   const { cursorSize, cursorStyle, highlighterOpacity } = next.settings.drawing;
@@ -426,4 +459,7 @@ window.addEventListener('resize', resize);
 
 api.onState(applyState);
 api.onInkOrder(obey);
+api.onFrozen((image) => {
+  showFrozen(image).catch((error: unknown) => console.error('overlay.freeze-failed', error));
+});
 resize();

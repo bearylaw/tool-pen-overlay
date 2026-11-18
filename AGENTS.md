@@ -48,7 +48,9 @@ releases and deploys only when asked. Detail: the standards' `guidelines/git.md`
 - Never edit `package-lock.json` by hand or `dist/`, `release/`.
 - Never run the app or `test:e2e` while the user is working without asking:
   the overlay captures the real mouse in drawing mode.
-- Never add network access, telemetry or screen capture.
+- Never add network access or telemetry. Screen capture exists only for the
+  opt-in freeze ([decision 0006](docs/decisions/0006-screen-freeze.md)):
+  in memory, never saved or sent; do not widen it.
 
 ## Context
 

@@ -103,6 +103,8 @@ export interface AppState {
 export interface PenOverlayApi {
   readonly onState: (listener: (state: AppState) => void) => void;
   readonly onInkOrder: (listener: (order: InkOrder) => void) => void;
+  /** A still JPEG of the overlay's own display, sent when drawing starts frozen. */
+  readonly onFrozen: (listener: (image: Uint8Array<ArrayBuffer>) => void) => void;
   readonly command: (command: CommandInput) => void;
   readonly intent: (intent: z.input<typeof intentSchema>) => void;
   readonly reportSize: (size: ContentSize) => void;

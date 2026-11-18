@@ -42,6 +42,8 @@ touches the network.
 - **A cursor you can see**: five styles (crosshair and tool, crosshair,
   tool icon, brush preview, presenter spotlight) in two sizes, all outlined
   to stay visible on any background.
+- **Freeze the screen** (optional): draw on a still picture of your screens
+  while everything behind it keeps running, until you stop drawing.
 - **Undo and redo** across all monitors, **clear**, and **hide drawings**
   without losing them.
 - **Draggable toolbar**, horizontal or vertical, full or **compact**,
@@ -171,7 +173,7 @@ Open the colour panel with the rainbow ring.
 | Section | What you can change |
 |---|---|
 | Toolbar | Full or compact style, horizontal or vertical layout, size (75–200 %), theme, language |
-| Drawing | Cursor style (with previews) and size, pen pressure on or off, highlighter opacity |
+| Drawing | Cursor style (with previews) and size, pen pressure on or off, freeze the screen while drawing, highlighter opacity |
 | Behaviour | Clear drawings when you stop drawing, start in drawing mode, launch at login (Windows, macOS) |
 | Defaults | Start with the last used tool or with your saved defaults; save the current tool, colour and size as your default |
 | Global shortcuts | See above |
@@ -213,9 +215,12 @@ Something that does not work for you is a bug: please
 
 ## Privacy
 
-Pen Overlay makes no network connections, has no telemetry and does not
-capture your screen. Drawings live in memory only and are gone when the app
-quits. The only files it writes are its settings and a small log.
+Pen Overlay makes no network connections and has no telemetry. It captures
+your screen only when you turn on *Freeze the screen while drawing*: one
+still image per screen when drawing starts, kept in memory and dropped when
+drawing stops, never saved or sent (macOS asks for the Screen Recording
+permission the first time). Drawings live in memory only and are gone when
+the app quits. The only files it writes are its settings and a small log.
 
 ## Troubleshooting
 

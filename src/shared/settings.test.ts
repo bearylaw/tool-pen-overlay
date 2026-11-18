@@ -17,6 +17,15 @@ describe('migrateSettings', () => {
     expect(parse({})).toEqual(DEFAULT_SETTINGS);
   });
 
+  it('loads a file from before the screen freeze with the freeze off', () => {
+    const { freezeScreen: _, ...olderDrawing } = DEFAULT_SETTINGS.drawing;
+    expect(parse({ drawing: { ...olderDrawing, pressure: false } }).drawing).toEqual({
+      ...DEFAULT_SETTINGS.drawing,
+      pressure: false,
+      freezeScreen: false,
+    });
+  });
+
   it('rejects input that is not an object', () => {
     expect(migrateSettings('nope')).toEqual({
       ok: false,

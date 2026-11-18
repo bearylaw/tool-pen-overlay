@@ -6,6 +6,15 @@ project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Settings → Drawing → **Freeze the screen while drawing** (off by
+  default). When on, each screen is captured as a still picture the moment
+  drawing starts and the ink goes on top of it, so videos and changing
+  windows behind it no longer move. Leaving drawing mode shows the live
+  screen again. The picture stays in memory and is never saved or sent; on
+  macOS the first freeze asks for the Screen Recording permission.
+
 ## [1.0.3] - 2026-10-23
 
 ### Added

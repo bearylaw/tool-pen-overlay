@@ -161,3 +161,11 @@ describe('toolbar style and latency', () => {
     expect(run(compact, { type: 'setToolbarStyle', style: 'full' }).toolbar.style).toBe('full');
   });
 });
+
+describe('drawing preferences', () => {
+  it('switches the screen freeze on and off', () => {
+    const on = run(DEFAULT_SETTINGS, { type: 'setFreezeScreen', enabled: true });
+    expect(on.drawing.freezeScreen).toBe(true);
+    expect(run(on, { type: 'setFreezeScreen', enabled: false }).drawing.freezeScreen).toBe(false);
+  });
+});

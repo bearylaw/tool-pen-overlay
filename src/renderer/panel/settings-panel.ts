@@ -97,6 +97,7 @@ export function settingsPanel(): View<AppState> {
     send({ type: 'setCursorSize', cursorSize: value }),
   );
   const pressure = toggle((enabled) => send({ type: 'setPressure', enabled }));
+  const freeze = toggle((enabled) => send({ type: 'setFreezeScreen', enabled }));
   const opacityValue = h('output', { className: 'muted' });
   const opacity = h('input', {
     attrs: { id: 'opacity', type: 'range', min: 10, max: 90, step: 5 },
@@ -164,6 +165,7 @@ export function settingsPanel(): View<AppState> {
       field(labels.cursorStyle, cursorStyle.el),
       field(labels.cursor, cursorSize.el),
       pressure.el,
+      freeze.el,
       field(h('div', { className: 'row between' }, [labels.opacity, opacityValue]), opacity),
     ]),
     section(
@@ -260,6 +262,7 @@ export function settingsPanel(): View<AppState> {
       t('cursor.label'),
     );
     pressure.update(s.drawing.pressure, t('pressure.label'));
+    freeze.update(s.drawing.freezeScreen, t('freeze.label'));
     labels.opacity.textContent = t('size.opacity');
     const pct = Math.round(s.drawing.highlighterOpacity * 100);
     opacityValue.textContent = `${pct} %`;

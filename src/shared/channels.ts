@@ -7,4 +7,5 @@ export const CHANNELS = {
   size: 'pen:size',
   inkReport: 'pen:ink-report',
   inkOrder: 'pen:ink-order',
+  frozen: 'pen:frozen',
 } as const;

@@ -9,6 +9,10 @@ export interface OverlayManager {
   /** Creates, moves or removes overlays to match the connected displays. */
   readonly sync: () => void;
   readonly setDrawMode: (enabled: boolean) => void;
+  /** Hides every overlay, ink included, while the screens are captured. */
+  readonly setVisible: (visible: boolean) => void;
+  /** Hands an overlay the still image of its display. */
+  readonly freeze: (displayId: number, image: Uint8Array) => void;
   readonly send: (displayId: number, order: InkOrder) => void;
   readonly broadcast: (state: AppState) => void;
   /** Display id for a renderer, or `null` when it is not an overlay. */
@@ -99,6 +103,13 @@ export function createOverlayManager(options: OverlayOptions): OverlayManager {
       drawMode = enabled;
       for (const win of windows.values()) win.setIgnoreMouseEvents(!enabled);
     },
+    setVisible: (visible) => {
+      for (const win of windows.values()) {
+        if (visible) win.showInactive();
+        else win.hide();
+      }
+    },
+    freeze: (displayId, image) => windows.get(displayId)?.webContents.send(CHANNELS.frozen, image),
     send: (displayId, order) => windows.get(displayId)?.webContents.send(CHANNELS.inkOrder, order),
     broadcast: (state) => {
       lastState = state;

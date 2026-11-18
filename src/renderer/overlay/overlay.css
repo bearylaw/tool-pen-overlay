@@ -22,9 +22,19 @@ canvas {
 }
 
 /* Events go to the live layer, which owns the gesture. */
+#frozen,
 #ink,
 #tip {
   pointer-events: none;
+}
+
+/* Only while drawing, and hidden at once if the option is switched off. */
+#frozen {
+  display: none;
+}
+
+body.frozen #frozen {
+  display: block;
 }
 
 body.hidden canvas {

@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'node:timers/promises';
 import { app, dialog, nativeTheme } from 'electron';
 import { type Command, reduce } from '../shared/commands';
 import { resolveLocale, translate } from '../shared/i18n';
@@ -12,6 +13,7 @@ import type {
   Runtime,
 } from '../shared/ipc';
 import type { Position, Settings, ShortcutAction } from '../shared/settings';
+import { captureDisplays } from './freeze';
 import {
   EMPTY_ROUTER,
   forgetDisplay,
@@ -53,6 +55,8 @@ export interface Controller {
 }
 
 const NOTICE_MS = 4000;
+/** Time for the compositor to take hidden windows off the screen before a capture. */
+const HIDE_SETTLE_MS = 150;
 const COLOR_COMMANDS = new Set<Command['type']>([
   'setTool',
   'setShape',
@@ -68,6 +72,7 @@ export function createController(options: ControllerOptions): Controller {
     loaded.startup === 'defaults' ? { ...loaded, tool: loaded.defaults } : loaded;
   let router: RouterState = EMPTY_ROUTER;
   let recording = false;
+  let freezing = false;
   let noticeTimer: NodeJS.Timeout | null = null;
   const inkReports = new Map<number, InkReport>();
   const anchors = new Map<PanelKind, Rect>();
@@ -194,7 +199,32 @@ export function createController(options: ControllerOptions): Controller {
   }
 
   function setDrawMode(enabled: boolean): void {
-    if (enabled === runtime.drawMode) return;
+    if (enabled === runtime.drawMode || freezing) return;
+    if (enabled && settings.drawing.freezeScreen) {
+      freezeThenDraw().catch((error: unknown) => log.error('freeze.crashed', error));
+      return;
+    }
+    applyDrawMode(enabled);
+  }
+
+  /** Captures every screen without the app's own windows, then starts drawing on top. */
+  async function freezeThenDraw(): Promise<void> {
+    freezing = true;
+    overlays.setVisible(false);
+    setToolbarVisible(false);
+    try {
+      await sleep(HIDE_SETTLE_MS);
+      const frames = await captureDisplays(log);
+      for (const [displayId, image] of frames) overlays.freeze(displayId, image);
+    } finally {
+      freezing = false;
+      overlays.setVisible(true);
+      applyDrawMode(true);
+      toolbar.raise();
+    }
+  }
+
+  function applyDrawMode(enabled: boolean): void {
     if (!enabled && settings.behavior.clearOnExit) clear();
     overlays.setDrawMode(enabled);
     runtime = { ...runtime, drawMode: enabled, inkVisible: enabled ? true : runtime.inkVisible };

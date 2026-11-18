@@ -60,6 +60,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('setTheme'), theme: z.enum(THEMES) }),
   z.object({ type: z.literal('setLanguage'), language: z.enum(LANGUAGES) }),
   z.object({ type: z.literal('setPressure'), enabled: z.boolean() }),
+  z.object({ type: z.literal('setFreezeScreen'), enabled: z.boolean() }),
   z.object({ type: z.literal('setCursorSize'), cursorSize: z.enum(CURSOR_SIZES) }),
   z.object({ type: z.literal('setCursorStyle'), cursorStyle: z.enum(CURSOR_STYLES) }),
   z.object({ type: z.literal('setHighlighterOpacity'), opacity: z.number().finite() }),
@@ -155,6 +156,8 @@ function reducePreferences(settings: Settings, command: Command): Settings {
       return { ...settings, drawing: { ...settings.drawing, cursorSize: command.cursorSize } };
     case 'setPressure':
       return { ...settings, drawing: { ...settings.drawing, pressure: command.enabled } };
+    case 'setFreezeScreen':
+      return { ...settings, drawing: { ...settings.drawing, freezeScreen: command.enabled } };
     case 'setHighlighterOpacity':
       return {
         ...settings,
