@@ -404,6 +404,8 @@ async function showFrozen(image: Uint8Array<ArrayBuffer>): Promise<void> {
     bitmap.close();
     return;
   }
+  frozenCanvas.width = bitmap.width;
+  frozenCanvas.height = bitmap.height;
   frozenCtx?.transferFromImageBitmap(bitmap);
   frozenShown = true;
 }
